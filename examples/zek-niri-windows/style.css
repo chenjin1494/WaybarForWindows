@@ -590,7 +590,8 @@ window#waybar.empty #window {
 #custom-cava {
     font-size: 11px;
 }
-/* Windows: 中央 Windows 11 徽标 + 两侧三角形统一 #75AAD7 */
+/* Windows: 中央 Windows 11 徽标
+   过渡三角形底色 #2E3942，三角形与徽标底色 #75AAD7 */
 #custom-applauncher {
     background-color: #75AAD7;
     color: #f4f7fb;
@@ -599,5 +600,16 @@ window#waybar.empty #window {
 #custom-right_div_1,
 #custom-left_div_11,
 #custom-right_div_11 {
+    background-color: #2E3942;
+    color: #75AAD7;
+}
+/* logo-colors：这四个分隔符带 nc-fade 动画，GTK 对无窗口的 DrawingArea
+   应用 opacity 后整块变透明，所以这里关闭动画，颜色才可见 */
+#custom-left_div_1,
+#custom-right_div_1,
+#custom-left_div_11,
+#custom-right_div_11 {
+    animation: none;
+    background-color: #2E3942;
     color: #75AAD7;
 }

@@ -32,7 +32,11 @@
         "idle_inhibitor",
         "clock#date",
         "power-profiles-daemon",
+        "custom/left_div_11",
+        "custom/left_div_1",
         "custom/applauncher",
+        "custom/right_div_1",
+        "custom/right_div_11",
         "clock",
         "custom/right_div_2",
         "custom/cava"

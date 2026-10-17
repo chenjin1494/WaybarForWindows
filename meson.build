@@ -76,56 +76,110 @@ is_dragonfly = host_machine.system() == 'dragonfly'
 is_freebsd = host_machine.system() == 'freebsd'
 is_netbsd = host_machine.system() == 'netbsd'
 is_openbsd = host_machine.system() == 'openbsd'
+is_windows = host_machine.system() == 'windows'
 
 thread_dep = dependency('threads')
 fmt = dependency('fmt', version : ['>=8.1.1'], fallback : ['fmt', 'fmt_dep'])
 spdlog = dependency('spdlog', version : ['>=1.15.2'], fallback : ['spdlog', 'spdlog_dep'], default_options : ['std_format=disabled', 'tests=disabled'])
-wayland_client = dependency('wayland-client')
-wayland_cursor = dependency('wayland-cursor')
-wayland_protos = dependency('wayland-protocols')
 gtkmm = dependency('gtkmm-3.0', version : ['>=3.22.0'])
 giomm = dependency('giomm-2.4', version : ['>=2.4.0'])
-dbusmenu_gtk = dependency('dbusmenu-gtk3-0.4', required: get_option('dbusmenu-gtk'))
-giounix = dependency('gio-unix-2.0')
 jsoncpp = dependency('jsoncpp', version : ['>=1.9.2'], fallback : ['jsoncpp', 'jsoncpp_dep'])
 sigcpp = dependency('sigc++-2.0')
-libinotify = dependency('libinotify', required: false)
-libepoll = dependency('epoll-shim', required: false)
-libinput = dependency('libinput', required: get_option('libinput'))
-libnl = dependency('libnl-3.0', required: get_option('libnl'))
-libnlgen = dependency('libnl-genl-3.0', required: get_option('libnl'))
-upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
-pipewire = dependency('libpipewire-0.3', required: get_option('pipewire'))
-playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
-libpulse = dependency('libpulse', required: get_option('pulseaudio'))
-libudev = dependency('libudev', required: get_option('libudev'))
-libevdev = dependency('libevdev', required: get_option('libevdev'))
-libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
-xkbregistry = dependency('xkbregistry')
-libjack = dependency('jack', required: get_option('jack'))
-libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
-libgps = dependency('libgps', required: get_option('gps'))
-libmm_glib = dependency('mm-glib', required: get_option('wwan'))
 
-libsndio = compiler.find_library('sndio', required: get_option('sndio'))
-if libsndio.found()
-    if not compiler.has_function('sioctl_open', prefix: '#include <sndio.h>', dependencies: libsndio)
-        if get_option('sndio').enabled()
-            error('libsndio is too old, required >=1.7.0')
-        else
-            warning('libsndio is too old, required >=1.7.0')
-            libsndio = dependency('', required: false)
+if is_windows
+    # Windows 端口：Wayland / layer-shell / DBus / udev / PulseAudio 等平台依赖不可用。
+    # 用「未找到的空依赖」占位，使后续 `if dep.found()` 守卫自动跳过对应模块。
+    null_dep = dependency('', required : false)
+    wayland_client = null_dep
+    wayland_cursor = null_dep
+    wayland_protos = null_dep
+    dbusmenu_gtk = null_dep
+    giounix = null_dep
+    libinotify = null_dep
+    libepoll = null_dep
+    libinput = null_dep
+    libnl = null_dep
+    libnlgen = null_dep
+    upower_glib = null_dep
+    pipewire = null_dep
+    playerctl = null_dep
+    libpulse = null_dep
+    libudev = null_dep
+    libevdev = null_dep
+    libmpdclient = null_dep
+    xkbregistry = null_dep
+    libjack = null_dep
+    libwireplumber = null_dep
+    libgps = null_dep
+    libmm_glib = null_dep
+    libsndio = null_dep
+    gtk_layer_shell = null_dep
+    systemd = null_dep
+    libsystemd = null_dep
+    # 时钟时区：Windows 侧使用 ICU（支持 IANA 时区名）
+    icu_uc = dependency('icu-uc', required : true)
+    icu_i18n = dependency('icu-i18n', required : true)
+    # Windows 平台层使用的系统库
+    win32_deps = [
+        compiler.find_library('shcore'),
+        compiler.find_library('dwmapi'),
+        compiler.find_library('pdh'),
+        compiler.find_library('psapi'),
+        compiler.find_library('powrprof'),
+        compiler.find_library('wlanapi'),
+        compiler.find_library('iphlpapi'),
+        compiler.find_library('setupapi'),
+        compiler.find_library('propsys'),
+        compiler.find_library('bthprops'),
+        compiler.find_library('version'),
+    ]
+else
+    wayland_client = dependency('wayland-client')
+    wayland_cursor = dependency('wayland-cursor')
+    wayland_protos = dependency('wayland-protocols')
+    dbusmenu_gtk = dependency('dbusmenu-gtk3-0.4', required: get_option('dbusmenu-gtk'))
+    giounix = dependency('gio-unix-2.0')
+    libinotify = dependency('libinotify', required: false)
+    libepoll = dependency('epoll-shim', required: false)
+    libinput = dependency('libinput', required: get_option('libinput'))
+    libnl = dependency('libnl-3.0', required: get_option('libnl'))
+    libnlgen = dependency('libnl-genl-3.0', required: get_option('libnl'))
+    upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
+    pipewire = dependency('libpipewire-0.3', required: get_option('pipewire'))
+    playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
+    libpulse = dependency('libpulse', required: get_option('pulseaudio'))
+    libudev = dependency('libudev', required: get_option('libudev'))
+    libevdev = dependency('libevdev', required: get_option('libevdev'))
+    libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
+    xkbregistry = dependency('xkbregistry')
+    libjack = dependency('jack', required: get_option('jack'))
+    libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
+    libgps = dependency('libgps', required: get_option('gps'))
+    libmm_glib = dependency('mm-glib', required: get_option('wwan'))
+
+    libsndio = compiler.find_library('sndio', required: get_option('sndio'))
+    if libsndio.found()
+        if not compiler.has_function('sioctl_open', prefix: '#include <sndio.h>', dependencies: libsndio)
+            if get_option('sndio').enabled()
+                error('libsndio is too old, required >=1.7.0')
+            else
+                warning('libsndio is too old, required >=1.7.0')
+                libsndio = dependency('', required: false)
+            endif
         endif
     endif
-endif
 
-gtk_layer_shell = dependency('gtk-layer-shell-0', version: ['>=0.9.0'],
-        default_options: ['introspection=false', 'vapi=false'],
-        fallback: ['gtk-layer-shell', 'gtk_layer_shell'])
-systemd = dependency('systemd', required: get_option('systemd'))
-libsystemd = dependency('libsystemd', required: get_option('systemd'))
-if libsystemd.found()
-    add_project_arguments('-DHAVE_LIBSYSTEMD', language: 'cpp')
+    gtk_layer_shell = dependency('gtk-layer-shell-0', version: ['>=0.9.0'],
+            default_options: ['introspection=false', 'vapi=false'],
+            fallback: ['gtk-layer-shell', 'gtk_layer_shell'])
+    systemd = dependency('systemd', required: get_option('systemd'))
+    libsystemd = dependency('libsystemd', required: get_option('systemd'))
+    if libsystemd.found()
+        add_project_arguments('-DHAVE_LIBSYSTEMD', language: 'cpp')
+    endif
+    icu_uc = dependency('', required : false)
+    icu_i18n = dependency('', required : false)
+    win32_deps = []
 endif
 
 cpp_lib_chrono = compiler.compute_int('__cpp_lib_chrono', prefix : '#include <chrono>')
@@ -145,8 +199,16 @@ int main(int argc, char** argv) {
    endif
 endif
 
+if is_windows
+  # libstdc++ 的 chrono 时区数据库依赖 /usr/share/zoneinfo，Windows 上不可用；
+  # Windows 端口使用 simpleclock，时区支持由 ICU 在 P2 阶段接入。
+  have_chrono_timezones = false
+endif
+
 if have_chrono_timezones
   tz_dep = declare_dependency()
+elif is_windows
+  tz_dep = dependency('', required : false)
 else
   tz_dep = dependency('date',
       required: false,
@@ -161,6 +223,20 @@ conf_data = configuration_data()
 conf_data.set('prefix', prefix)
 
 add_project_arguments('-DSYSCONFDIR="@0@"'.format(prefix / sysconfdir), language : 'cpp')
+
+if is_windows
+  add_project_arguments(
+    '-D_WIN32_WINNT=0x0A00',
+    '-DWINVER=0x0A00',
+    '-DNTDDI_VERSION=0x0A000000',
+    '-DNOMINMAX',
+    '-D_USE_MATH_DEFINES',
+    '-DWIN32_LEAN_AND_MEAN',
+    '-DUNICODE',
+    '-D_UNICODE',
+    '-DHAVE_WIN32=1',
+    language : 'cpp')
+endif
 
 if systemd.found()
   user_units_dir = systemd.get_variable(pkgconfig: 'systemduserunitdir')
@@ -182,12 +258,7 @@ src_files = files(
     'src/AAppIconLabel.cpp',
     'src/modules/custom.cpp',
     'src/modules/custom_graph.cpp',
-    'src/modules/disk.cpp',
-    'src/modules/idle_inhibitor.cpp',
     'src/modules/image.cpp',
-    'src/modules/load.cpp',
-    'src/modules/temperature.cpp',
-    'src/modules/user.cpp',
     'src/ASlider.cpp',
     'src/main.cpp',
     'src/bar.cpp',
@@ -201,7 +272,6 @@ src_files = files(
     'src/util/rewrite_string.cpp',
     'src/util/hosts_check.cpp',
     'src/util/gtk_icon.cpp',
-    'src/util/icon_loader.cpp',
     'src/util/regex_collection.cpp',
     'src/util/css_reload_helper.cpp',
     'src/util/transform_8bit_to_rgba.cpp',
@@ -221,6 +291,34 @@ man_files = files(
 )
 
 inc_dirs = ['include']
+
+if is_windows
+    # Windows 平台层（窗口/布局/路径/进程/控制通道/主题/休眠）
+    src_files += files(
+        'src/win32/common.cpp',
+        'src/win32/paths.cpp',
+        'src/win32/layout.cpp',
+        'src/win32/bar_backend.cpp',
+        'src/win32/control.cpp',
+        'src/win32/exec.cpp',
+        'src/win32/theme.cpp',
+        'src/win32/sleep.cpp',
+    )
+    # P1：先交付核心 Shell 与 custom/image/clock 模块；其余模块在 P2 逐个接入。
+    src_files += files(
+        'src/modules/simpleclock.cpp',
+    )
+    add_project_arguments('-DHAVE_WIN32_PLATFORM', language: 'cpp')
+else
+    src_files += files(
+        'src/modules/disk.cpp',
+        'src/modules/idle_inhibitor.cpp',
+        'src/modules/load.cpp',
+        'src/modules/temperature.cpp',
+        'src/modules/user.cpp',
+        'src/util/icon_loader.cpp',
+    )
+endif
 
 if is_linux
     add_project_arguments('-DHAVE_CPU_LINUX', language: 'cpp')
@@ -275,6 +373,8 @@ elif is_dragonfly or is_freebsd or is_netbsd or is_openbsd
     endif
 endif
 
+# Wayland / Wayland 合成器专有模块：Windows 端口整体跳过
+if not is_windows
 if true
     add_project_arguments('-DHAVE_SWAY', language: 'cpp')
     src_files += files(
@@ -408,8 +508,9 @@ if true
         'man/waybar-wayfire-workspaces.5.scd',
     )
 endif
+endif  # not is_windows (Wayland / compositor modules)
 
-if get_option('login-proxy')
+if not is_windows and get_option('login-proxy')
     add_project_arguments('-DHAVE_LOGIN_PROXY', language: 'cpp')
 endif
 
@@ -419,7 +520,7 @@ if libnl.found() and libnlgen.found()
     man_files += files('man/waybar-network.5.scd')
 endif
 
-if not get_option('logind').disabled()
+if not is_windows and not get_option('logind').disabled()
     add_project_arguments('-DHAVE_GAMEMODE', '-DHAVE_LOGIND_INHIBITOR', language: 'cpp')
     src_files += files(
         'src/modules/gamemode.cpp',
@@ -551,24 +652,29 @@ else
     man_files += files('man/waybar-clock.5.scd')
 endif
 
-cava = dependency('libcava',
-                  version : '>=1.0.0',
-                  required: get_option('cava'),
-                  fallback : ['libcava', 'cava_dep'],
-                  not_found_message: 'cava is not found. Building waybar without cava')
+if is_windows
+    cava = dependency('', required : false)
+    eproxy = dependency('', required : false)
+else
+    cava = dependency('libcava',
+                      version : '>=1.0.0',
+                      required: get_option('cava'),
+                      fallback : ['libcava', 'cava_dep'],
+                      not_found_message: 'cava is not found. Building waybar without cava')
 
-eproxy = dependency('epoxy', required: false)
+    eproxy = dependency('epoxy', required: false)
 
-if cava.found()
-   add_project_arguments('-DHAVE_LIBCAVA', language: 'cpp')
-   src_files += files('src/modules/cava/cavaRaw.cpp',
-                      'src/modules/cava/cava_backend.cpp')
-   man_files += files('man/waybar-cava.5.scd')
+    if cava.found()
+       add_project_arguments('-DHAVE_LIBCAVA', language: 'cpp')
+       src_files += files('src/modules/cava/cavaRaw.cpp',
+                          'src/modules/cava/cava_backend.cpp')
+       man_files += files('man/waybar-cava.5.scd')
 
-   if eproxy.found()
-      add_project_arguments('-DHAVE_LIBCAVAGLSL', language: 'cpp')
-      src_files += files('src/modules/cava/cavaGLSL.cpp')
-   endif
+       if eproxy.found()
+          add_project_arguments('-DHAVE_LIBCAVAGLSL', language: 'cpp')
+          src_files += files('src/modules/cava/cavaGLSL.cpp')
+       endif
+    endif
 endif
 
 if libgps.found()
@@ -583,25 +689,32 @@ if libmm_glib.found()
    man_files += files('man/waybar-wwan.5.scd')
 endif
 
-subdir('protocol')
+if not is_windows
+    subdir('protocol')
+endif
 
 app_resources = []
 subdir('resources/icons')
 
-executable(
-    'waybar',
-    [src_files, app_resources],
-    dependencies: [
-        thread_dep,
+waybar_deps = [
+    thread_dep,
+    fmt,
+    spdlog,
+    sigcpp,
+    jsoncpp,
+    gtkmm,
+    giomm,
+    tz_dep,
+]
+
+if is_windows
+    waybar_deps += win32_deps
+    waybar_deps += [icu_uc, icu_i18n]
+else
+    waybar_deps += [
         client_protos,
         wayland_client,
-        fmt,
-        spdlog,
-        sigcpp,
-        jsoncpp,
         wayland_cursor,
-        gtkmm,
-        giomm,
         dbusmenu_gtk,
         giounix,
         libinput,
@@ -621,13 +734,18 @@ executable(
         libevdev,
         gtk_layer_shell,
         libsndio,
-        tz_dep,
-		xkbregistry,
+        xkbregistry,
         cava,
         eproxy,
         libgps,
-        libmm_glib
-    ],
+        libmm_glib,
+    ]
+endif
+
+executable(
+    'waybar',
+    [src_files, app_resources],
+    dependencies: waybar_deps,
     include_directories: inc_dirs,
     install: true,
 )
@@ -679,12 +797,17 @@ if scdoc.found()
     endforeach
 endif
 
-catch2 = dependency(
-    'catch2',
-    default_options: [ 'tests=false' ],
-    fallback: ['catch2', 'catch2_dep'],
-    required: get_option('tests'),
-)
+if is_windows
+    # P1：MSYS2 未提供 catch2，且上游 wrap 会访问 GitHub；P4 阶段改为 vendored 单头文件
+    catch2 = dependency('', required : false)
+else
+    catch2 = dependency(
+        'catch2',
+        default_options: [ 'tests=false' ],
+        fallback: ['catch2', 'catch2_dep'],
+        required: get_option('tests'),
+    )
+endif
 if catch2.found()
     subdir('test')
 endif

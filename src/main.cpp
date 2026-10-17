@@ -1,5 +1,33 @@
-#include <fcntl.h>
 #include <spdlog/spdlog.h>
+
+#include "bar.hpp"
+#include "client.hpp"
+
+#ifdef _WIN32
+
+// Windows：没有 POSIX 信号，控制命令通过命名管道（waybar --toggle/--reload/...）下发，
+// 具体处理在 Client 内部完成。这里只负责「请求 reload 时重新初始化」的循环。
+
+int main(int argc, char* argv[]) {
+  try {
+    auto* client = waybar::Client::inst();
+    int ret = 0;
+    do {
+      ret = client->main(argc, argv);
+    } while (ret == 0 && client->takeReloadRequest());
+    return ret;
+  } catch (const std::exception& e) {
+    spdlog::error("{}", e.what());
+    return 1;
+  } catch (const Glib::Exception& e) {
+    spdlog::error("{}", static_cast<std::string>(e.what()));
+    return 1;
+  }
+}
+
+#else
+
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -18,8 +46,6 @@
 #include <system_error>
 #endif
 
-#include "bar.hpp"
-#include "client.hpp"
 #include "util/SafeSignal.hpp"
 
 std::mutex reap_mtx;
@@ -249,3 +275,5 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 }
+
+#endif  // _WIN32

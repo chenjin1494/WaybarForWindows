@@ -1,29 +1,49 @@
 #include "config.hpp"
 
 #include <spdlog/spdlog.h>
+
+#include <filesystem>
+#include <fstream>
+#include <stdexcept>
+
+#ifdef _WIN32
+#include "win32/paths.hpp"
+#else
 #include <unistd.h>
 #ifndef __OpenBSD__
 #include <wordexp.h>
 #else
 #include <glob.h>
 #endif
+#endif
 
-#include <filesystem>
-#include <fstream>
-#include <stdexcept>
-
+#include "util/fs.hpp"
 #include "util/json.hpp"
 
 namespace fs = std::filesystem;
 
 namespace waybar {
 
+#ifdef _WIN32
+// Windows：目录表在运行时由环境变量与 exe 位置推导，见 src/win32/paths.cpp。
+const std::vector<std::string> Config::CONFIG_DIRS = win32::config_dirs();
+#else
 const std::vector<std::string> Config::CONFIG_DIRS = {
     "$XDG_CONFIG_HOME/waybar/", "$HOME/.config/waybar/",   "$HOME/waybar/",
     "/etc/xdg/waybar/",         SYSCONFDIR "/xdg/waybar/", "./resources/",
 };
+#endif
 
 const char* Config::CONFIG_PATH_ENV = "WAYBAR_CONFIG_DIR";
+
+#ifdef _WIN32
+
+std::vector<std::string> Config::tryExpandPath(const std::string& base,
+                                               const std::string& filename) {
+  return win32::try_expand_path(base, filename);
+}
+
+#else
 
 std::vector<std::string> Config::tryExpandPath(const std::string& base,
                                                const std::string& filename) {
@@ -65,11 +85,31 @@ std::vector<std::string> Config::tryExpandPath(const std::string& base,
   return results;
 }
 
+#endif  // _WIN32
+
+namespace {
+
+// 读取环境变量；未设置时返回空 optional。
+// Windows 上用宽字符 API（std::getenv 返回 ANSI，中文路径会乱码）。
+std::optional<std::string> get_env_value(const char* name) {
+#ifdef _WIN32
+  std::string value = win32::get_env(name);
+  if (value.empty()) return std::nullopt;
+  return value;
+#else
+  const char* value = std::getenv(name);
+  if (value == nullptr) return std::nullopt;
+  return std::string(value);
+#endif
+}
+
+}  // namespace
+
 std::optional<std::string> Config::findConfigPath(const std::vector<std::string>& names,
                                                   const std::vector<std::string>& dirs) {
-  if (const char* dir = std::getenv(Config::CONFIG_PATH_ENV)) {
+  if (auto dir = get_env_value(Config::CONFIG_PATH_ENV)) {
     for (const auto& name : names) {
-      if (auto res = tryExpandPath(dir, name); !res.empty()) {
+      if (auto res = tryExpandPath(*dir, name); !res.empty()) {
         return res.front();
       }
     }
@@ -89,7 +129,7 @@ void Config::setupConfig(Json::Value& dst, const std::string& config_file, int d
   if (depth > 100) {
     throw std::runtime_error("Aborting due to likely recursive include in config files");
   }
-  std::ifstream file(config_file);
+  auto file = util::open_ifstream(config_file);
   if (!file.is_open()) {
     throw std::runtime_error("Can't open config file");
   }
@@ -112,8 +152,8 @@ std::vector<std::string> Config::findIncludePath(const std::string& name,
   if (!match1.empty()) {
     return match1;
   }
-  if (const char* dir = std::getenv(Config::CONFIG_PATH_ENV)) {
-    if (auto res = tryExpandPath(dir, name); !res.empty()) {
+  if (auto dir = get_env_value(Config::CONFIG_PATH_ENV)) {
+    if (auto res = tryExpandPath(*dir, name); !res.empty()) {
       return res;
     }
   }
@@ -178,9 +218,8 @@ bool isValidOutput(const Json::Value& config, const std::string& name,
                    const std::string& identifier, int32_t width, int32_t height) {
   const auto isOutputMatches = [&](const std::string& output) -> bool {
     if (output.substr(0, 1) == "$") {
-      auto* const environment_value = std::getenv(output.substr(1).c_str());
-      if (environment_value != nullptr) {
-        const std::string output_from_env = environment_value;
+      if (auto environment_value = get_env_value(output.substr(1).c_str())) {
+        const std::string output_from_env = *environment_value;
         return output_from_env == name || output_from_env == identifier;
       }
 

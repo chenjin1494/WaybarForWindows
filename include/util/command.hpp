@@ -1,8 +1,23 @@
 #pragma once
 
+#include <spdlog/spdlog.h>
+
+#include <array>
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <mutex>
+#include <string>
+
+#ifdef _WIN32
+// Windows 侧实现见 src/win32/exec.cpp
+#include "win32/exec.hpp"
+
+// 上游用 WEXITSTATUS(command::close(...)) 取退出码；Windows 上 close 直接返回退出码。
+#define WB_EXIT_CODE(status) (status)
+#else
 #include <fcntl.h>
 #include <giomm.h>
-#include <spdlog/spdlog.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -13,17 +28,17 @@
 #include <sys/procctl.h>
 #endif
 
-#include <array>
+#include <list>
 
-extern std::mutex reap_mtx;
-extern std::list<pid_t> reap;
+#define WB_EXIT_CODE(status) WEXITSTATUS(status)
+#endif
 
 namespace waybar::util::command {
 
 constexpr int kExecFailureExitCode = 127;
 
 struct res {
-  int exit_code;
+  int exit_code = -1;
   std::string out;
 };
 
@@ -43,6 +58,80 @@ inline std::string read(FILE* fp) {
   }
   return output;
 }
+
+// 跨平台按行读取（替代 POSIX getline）：成功返回 true，EOF 返回 false。
+inline bool read_line(FILE* fp, std::string& line) {
+  std::array<char, 4096> buffer = {0};
+  line.clear();
+  bool any = false;
+  while (fgets(buffer.data(), static_cast<int>(buffer.size()), fp) != nullptr) {
+    any = true;
+    line += buffer.data();
+    if (!line.empty() && line.back() == '\n') break;
+  }
+  return any;
+}
+
+#ifdef _WIN32
+
+// 等待子进程退出并返回退出码（由 close 使用）。
+inline int close(FILE* fp, int32_t pid) {
+  if (fp != nullptr) fclose(fp);
+  const int code = waybar::win32::wait_exit_code(pid, -1);
+  spdlog::debug("Cmd exited with code {}", code);
+  return code;
+}
+
+// 打开一个子进程并按行读取 stdout。
+inline FILE* open(const std::string& cmd, int32_t& pid, const std::string& output_name) {
+  if (cmd.empty()) return nullptr;
+  FILE* file = waybar::win32::run_piped(cmd, output_name, pid);
+  if (file == nullptr) {
+    spdlog::error("Unable to exec cmd {}", cmd);
+    return nullptr;
+  }
+  return file;
+}
+
+inline struct res exec(const std::string& cmd, const std::string& output_name) {
+  struct res result;
+  result.exit_code = waybar::win32::run_capture(cmd, output_name, result.out);
+  return result;
+}
+
+inline struct res execNoRead(const std::string& cmd) {
+  struct res result;
+  result.exit_code = waybar::win32::run_capture(cmd, "", result.out);
+  return result;
+}
+
+inline int32_t forkExec(const std::string& cmd, const std::string& output_name) {
+  if (cmd.empty()) return -1;
+  const int32_t pid = waybar::win32::run_detached(cmd, output_name);
+  if (pid == 0) {
+    spdlog::error("Unable to exec cmd {}", cmd);
+    return -1;
+  }
+  spdlog::debug("Spawned child with PID: {}", pid);
+  return pid;
+}
+
+inline int32_t forkExec(const std::string& cmd) { return forkExec(cmd, ""); }
+
+// 非阻塞检查子进程是否退出；已退出（或已不存在）返回 true 并写入退出码。
+inline bool reap_child(int32_t pid, int& status) {
+  if (pid <= 0) return true;
+  const int code = waybar::win32::wait_exit_code(pid, 0);
+  status = code < 0 ? 0 : code;
+  return true;
+}
+
+inline void killChild(int32_t pid) { waybar::win32::kill_child(pid); }
+
+#else  // !_WIN32
+
+extern std::mutex reap_mtx;
+extern std::list<pid_t> reap;
 
 inline int close(FILE* fp, pid_t pid) {
   int stat = -1;
@@ -128,7 +217,7 @@ inline FILE* open(const std::string& cmd, int& pid, const std::string& output_na
 }
 
 inline struct res exec(const std::string& cmd, const std::string& output_name) {
-  int pid;
+  int pid = 0;
   auto fp = command::open(cmd, pid, output_name);
   if (!fp) return {-1, ""};
   auto output = command::read(fp);
@@ -137,7 +226,7 @@ inline struct res exec(const std::string& cmd, const std::string& output_name) {
 }
 
 inline struct res execNoRead(const std::string& cmd) {
-  int pid;
+  int pid = 0;
   auto fp = command::open(cmd, pid, "");
   if (!fp) return {-1, ""};
   auto stat = command::close(fp, pid);
@@ -181,5 +270,11 @@ inline int32_t forkExec(const std::string& cmd, const std::string& output_name) 
 }
 
 inline int32_t forkExec(const std::string& cmd) { return forkExec(cmd, ""); }
+
+inline void killChild(int32_t pid) {
+  if (pid > 0) killpg(pid, SIGTERM);
+}
+
+#endif  // _WIN32
 
 }  // namespace waybar::util::command

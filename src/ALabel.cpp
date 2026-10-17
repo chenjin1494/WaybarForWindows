@@ -79,7 +79,7 @@ ALabel::ALabel(const Json::Value& config, const std::string& name, const std::st
     label_.setFitHeight(config_["fit-height"].asBool());
   }
 
-  uint rotate = 0;
+  unsigned int rotate = 0;
 
   if (config_["rotate"].isUInt()) {
     rotate = config["rotate"].asUInt();

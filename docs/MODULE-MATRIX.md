@@ -14,15 +14,15 @@
 
 | 模块 | Windows 数据源 | 状态 | 备注 |
 |---|---|---|---|
-| `clock` | 系统时间 + ICU tzdb | ⏳ | `timezone` 支持 IANA 名；`calendar-format`/`today-format` 保留 |
-| `simpleclock` | 同上（无 tz 依赖时的上游回退实现） | ⏳ | 与上游一致按能力选择 |
+| `clock` | 系统时间（当前用 upstream `simpleclock` 实现） | ✅ P1 | `timezone` 支持 IANA 名；`calendar-format`/`today-format` 保留 |
+| `simpleclock` | 系统时间（无 tz 依赖的上游回退实现） | ✅ P1 | 与上游一致按能力选择 |
 | `user` | 进程 Token / 环境变量 | ⏳ | `format`/`icon` |
 | `disk` | `GetDiskFreeSpaceEx` + `GetVolumeInformation` | ⏳ | POSIX 路径 `/` → 系统盘符 |
-| `image` | gdk-pixbuf | ⏳ | `path`/`interval`/`size` |
-| `custom/*` | `CreateProcessW`（`cmd.exe`） | ⏳ | 新增可选 `shell` 键；`exec-if`/`return-type`/`signal`/流式输出保留 |
-| `custom-graph/*` | 同上 + `AGraph` | ⏳ | |
+| `image` | gdk-pixbuf | ✅ P1 | `path`/`interval`/`size` |
+| `custom/*` | `CreateProcessW`（`cmd.exe`） | ✅ P1 | 新增可选 `shell` 键；`exec-if`/`return-type`/`signal`/流式输出保留 |
+| `custom-graph/*` | 同上 + `AGraph` | ✅ P1 | |
 | `cffi/*` | `LoadLibraryW` | ⏳ | 替代 `dlopen` |
-| `group/*` | 纯 GTK | ⏳ | `group/<name>` 与 `drawer` |
+| `group/*` | 纯 GTK | ✅ P1 | `group/<name>` 与 `drawer` |
 | `idle_inhibitor` | `SetThreadExecutionState` | ⏳ | `timeout`/`format-icons`/点击切换 |
 | `keyboard-state` | `GetKeyState`（caps/num/scroll） | ⏳ | 比上游 Linux 实现更直接 |
 | `cpu` | `GetSystemTimes` / PDH | ⏳ | `states` 阈值语义一致 |

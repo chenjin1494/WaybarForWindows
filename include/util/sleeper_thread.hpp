@@ -9,7 +9,25 @@
 
 #include "prepare_for_sleep.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 namespace waybar::util {
+
+#ifdef _WIN32
+
+// Windows 没有 pthread_cancel 的等价语义（TerminateThread 会泄漏资源并可能死锁），
+// 因此取消被降级为「设置停止标志 + 唤醒条件变量」，由线程在检查点自行退出。
+class CancellationGuard {
+ public:
+  CancellationGuard() = default;
+  ~CancellationGuard() = default;
+};
+
+#else
 
 /**
  * Defer pthread_cancel until the end of a current scope.
@@ -25,6 +43,8 @@ class CancellationGuard {
   CancellationGuard() { pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate); }
   ~CancellationGuard() { pthread_setcancelstate(oldstate, &oldstate); }
 };
+
+#endif
 
 class SleeperThread {
  public:
@@ -69,7 +89,7 @@ class SleeperThread {
   bool isRunning() const { return do_run_.load(std::memory_order_relaxed); }
 
   auto sleep() {
-    std::unique_lock lk(mutex_);
+    std::unique_lock<std::mutex> lk(mutex_);
     CancellationGuard cancel_lock;
     return condvar_.wait(lk, [this] {
       return signal_.load(std::memory_order_relaxed) || !do_run_.load(std::memory_order_relaxed);
@@ -77,7 +97,7 @@ class SleeperThread {
   }
 
   auto sleep_for(std::chrono::system_clock::duration dur) {
-    std::unique_lock lk(mutex_);
+    std::unique_lock<std::mutex> lk(mutex_);
     CancellationGuard cancel_lock;
 
     condvar_.wait(lk, [this] {
@@ -99,7 +119,7 @@ class SleeperThread {
   auto sleep_until(
       std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration>
           time_point) {
-    std::unique_lock lk(mutex_);
+    std::unique_lock<std::mutex> lk(mutex_);
     CancellationGuard cancel_lock;
 
     condvar_.wait(lk, [this] {
@@ -127,11 +147,15 @@ class SleeperThread {
       do_run_.store(false, std::memory_order_relaxed);
     }
     condvar_.notify_all();
+#ifdef _WIN32
+    // 无法安全强杀 std::thread：线程会在下一个检查点自然退出。
+#else
     auto handle = thread_.native_handle();
     if (handle != 0) {
       // TODO: find a proper way to terminate thread...
       pthread_cancel(handle);
     }
+#endif
   }
 
   void pause() {

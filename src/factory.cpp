@@ -67,7 +67,9 @@
 #if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD)
 #include "modules/memory.hpp"
 #endif
+#ifndef _WIN32
 #include "modules/disk.hpp"
+#endif
 #ifdef HAVE_DBUSMENU
 #include "modules/sni/tray.hpp"
 #endif
@@ -130,6 +132,9 @@
 #include "modules/custom.hpp"
 #include "modules/custom_graph.hpp"
 #include "modules/image.hpp"
+#ifndef _WIN32
+#include "modules/disk.hpp"
+#endif
 #include "modules/temperature.hpp"
 #include "modules/user.hpp"
 
@@ -269,7 +274,11 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     }
 #endif
     if (ref == "idle_inhibitor") {
+#ifndef _WIN32
       return new waybar::modules::IdleInhibitor(id, bar_, config_[name]);
+#else
+      throw std::runtime_error("idle_inhibitor is not implemented on Windows yet");
+#endif
     }
 #if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD)
     if (ref == "memory") {
@@ -298,12 +307,14 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "clock") {
       return new waybar::modules::Clock(id, config_[name]);
     }
+#ifndef _WIN32
     if (ref == "user") {
       return new waybar::modules::User(id, config_[name]);
     }
     if (ref == "disk") {
       return new waybar::modules::Disk(id, config_[name]);
     }
+#endif
     if (ref == "image") {
       return new waybar::modules::Image(id, config_[name]);
     }
@@ -389,18 +400,22 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
       return new waybar::modules::Wwan(id, config_[name]);
     }
 #endif
+#ifndef _WIN32
     if (ref == "temperature") {
       return new waybar::modules::Temperature(id, config_[name]);
     }
+#endif
     if (ref.compare(0, 7, "custom/") == 0 && ref.size() > 7) {
       return new waybar::modules::Custom(ref.substr(7), id, config_[name], bar_.output->name);
     }
     if (ref.compare(0, 13, "custom-graph/") == 0 && ref.size() > 13) {
       return new waybar::modules::CustomGraph(ref.substr(13), id, config_[name], bar_.output->name);
     }
+#ifndef _WIN32
     if (ref.compare(0, 5, "cffi/") == 0 && ref.size() > 5) {
       return new waybar::modules::CFFI(ref.substr(5), id, config_[name]);
     }
+#endif
   } catch (const std::exception& e) {
     auto err = fmt::format("Disabling module \"{}\", {}", name, e.what());
     throw std::runtime_error(err);

@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     运行编译好的 waybar.exe（自动注入 MSYS2 运行库搜索路径）。

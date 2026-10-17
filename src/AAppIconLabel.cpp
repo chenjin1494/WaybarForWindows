@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <optional>
 
+#include "util/fs.hpp"
+
 #include "util/gtk_icon.hpp"
 
 namespace waybar {
@@ -34,9 +36,9 @@ std::string toLowerCase(const std::string& input) {
 std::optional<std::string> getFileBySuffix(const std::string& dir, const std::string& suffix,
                                            bool check_lower_case) {
   try {
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(util::to_path(dir))) {
       if (entry.is_regular_file()) {
-        std::string filename = entry.path().filename().string();
+        std::string filename = util::path_to_utf8(entry.path().filename());
         if (filename.size() < suffix.size()) {
           continue;
         }

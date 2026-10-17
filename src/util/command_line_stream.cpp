@@ -1,15 +1,23 @@
 #include "util/command_line_stream.hpp"
 
-#include <fcntl.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include <spdlog/spdlog.h>
 
 #include <array>
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
 #include <utility>
+
+#include "util/command.hpp"
+
+#ifdef _WIN32
+#include "win32/exec.hpp"
+#else
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <vector>
 
 #ifdef __linux__
@@ -18,10 +26,34 @@
 #ifdef __FreeBSD__
 #include <sys/procctl.h>
 #endif
-
-#include "util/command.hpp"
+#endif
 
 namespace {
+
+void emitBufferedLines(std::string& buffer,
+                       const waybar::util::command::LineStream::OutputCallback& on_output,
+                       bool flush_trailing_line) {
+  for (auto newline_pos = buffer.find('\n'); newline_pos != std::string::npos;
+       newline_pos = buffer.find('\n')) {
+    auto line = buffer.substr(0, newline_pos);
+    buffer.erase(0, newline_pos + 1);
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    on_output(line);
+  }
+
+  if (flush_trailing_line && !buffer.empty()) {
+    auto line = std::move(buffer);
+    buffer.clear();
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    on_output(line);
+  }
+}
+
+#ifndef _WIN32
 
 auto buildChildEnvironment(const std::string& output_name) -> std::vector<std::string> {
   auto names = Glib::listenv();
@@ -61,28 +93,7 @@ void prepareChild() {
   (void)setpgid(0, 0);
 }
 
-void emitBufferedLines(std::string& buffer,
-                       const waybar::util::command::LineStream::OutputCallback& on_output,
-                       bool flush_trailing_line) {
-  for (auto newline_pos = buffer.find('\n'); newline_pos != std::string::npos;
-       newline_pos = buffer.find('\n')) {
-    auto line = buffer.substr(0, newline_pos);
-    buffer.erase(0, newline_pos + 1);
-    if (!line.empty() && line.back() == '\r') {
-      line.pop_back();
-    }
-    on_output(line);
-  }
-
-  if (flush_trailing_line && !buffer.empty()) {
-    auto line = std::move(buffer);
-    buffer.clear();
-    if (!line.empty() && line.back() == '\r') {
-      line.pop_back();
-    }
-    on_output(line);
-  }
-}
+#endif  // !_WIN32
 
 }  // namespace
 
@@ -90,11 +101,75 @@ waybar::util::command::LineStream::LineStream(std::string output_name, OutputCal
                                               ExitCallback on_exit)
     : output_name_(std::move(output_name)),
       on_output_(std::move(on_output)),
-      on_exit_(std::move(on_exit)),
+      on_exit_(std::move(on_exit))
+#ifndef _WIN32
+      ,
       pid_(0),
-      stdout_fd_(-1) {}
+      stdout_fd_(-1)
+#endif
+{
+}
 
 waybar::util::command::LineStream::~LineStream() { stop(); }
+
+#ifdef _WIN32
+
+void waybar::util::command::LineStream::start(const std::string& cmd) {
+  stop();
+
+  std::FILE* file = waybar::win32::run_piped(cmd, output_name_, pid_);
+  if (file == nullptr) {
+    throw std::runtime_error("Unable to open " + cmd);
+  }
+  file_ = file;
+  running_.store(true, std::memory_order_relaxed);
+  reader_ = std::thread([this] { readerLoop(); });
+}
+
+void waybar::util::command::LineStream::readerLoop() {
+  std::array<char, 4096> chunk = {};
+  while (running_.load(std::memory_order_relaxed) && file_ != nullptr) {
+    char* line = fgets(chunk.data(), static_cast<int>(chunk.size()), file_);
+    if (line == nullptr) break;
+    buffer_.append(line);
+    emitBufferedLines(buffer_, on_output_, false);
+  }
+  emitBufferedLines(buffer_, on_output_, true);
+  buffer_.clear();
+
+  if (file_ != nullptr) {
+    fclose(file_);
+    file_ = nullptr;
+  }
+
+  const int exit_code = waybar::win32::wait_exit_code(pid_, -1);
+  pid_ = 0;
+  running_.store(false, std::memory_order_relaxed);
+  if (on_exit_) on_exit_(exit_code < 0 ? 1 : exit_code);
+}
+
+void waybar::util::command::LineStream::stop() {
+  const bool was_running = running_.exchange(false, std::memory_order_relaxed);
+  if (pid_ != 0) {
+    waybar::win32::kill_child(pid_);
+  }
+  if (reader_.joinable()) {
+    reader_.join();
+  }
+  if (file_ != nullptr) {
+    fclose(file_);
+    file_ = nullptr;
+  }
+  pid_ = 0;
+  buffer_.clear();
+  (void)was_running;
+}
+
+bool waybar::util::command::LineStream::running() const {
+  return running_.load(std::memory_order_relaxed) && pid_ != 0;
+}
+
+#else  // !_WIN32
 
 void waybar::util::command::LineStream::start(const std::string& cmd) {
   stop();
@@ -217,3 +292,5 @@ int waybar::util::command::LineStream::statusToExitCode(int status) {
   }
   return 1;
 }
+
+#endif  // _WIN32

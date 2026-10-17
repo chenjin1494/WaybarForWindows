@@ -1,7 +1,18 @@
 #include "util/prepare_for_sleep.h"
 
-#include <gio/gio.h>
 #include <spdlog/spdlog.h>
+
+#ifdef _WIN32
+
+#include "win32/sleep.hpp"
+
+waybar::SafeSignal<bool>& waybar::util::prepare_for_sleep() {
+  return waybar::win32::suspend_signal();
+}
+
+#else
+
+#include <gio/gio.h>
 
 namespace {
 class PrepareForSleep {
@@ -47,3 +58,5 @@ class PrepareForSleep {
 waybar::SafeSignal<bool>& waybar::util::prepare_for_sleep() {
   return PrepareForSleep::GetInstance().signal;
 }
+
+#endif  // _WIN32

@@ -63,3 +63,31 @@
 
 见 `MODULE-MATRIX.md` 中级别 **D** 的条目：Wayland 合成器专有模块、SNI 托盘、Linux 服务型模块。
 其行为与上游「未知模块」一致（告警 + 禁用），配置仍可正常载入。
+
+---
+
+## 6. P1 实施记录（核心 Shell 已跑通）
+
+以下问题是在真实构建/运行中暴露并已修复的，属于移植时容易踩的坑：
+
+| 问题 | 根因 | 处理 |
+|---|---|---|
+| `Gtk::Application` 报 `Unknown option --config` | GOption 会解析 `argv`，不认识我们自己的 CLI 参数 | 只把 `argv[0]` 交给 `Gtk::Application::create`，其余参数先由 clara 解析 |
+| `Cannot convert character sequence: Illegal byte sequence`，进程退出 | Windows 的 `std::filesystem::path(std::string)` 按 ANSI 解释窄串；`C:\Users\<中文>\...` 直接抛异常 | 新增 `include/util/fs.hpp`：`to_path()` 在 Windows 先转 UTF-16；所有 `ifstream/ofstream/fs::exists/directory_iterator` 改走该封装 |
+| `%LOCALAPPDATA%` 读到乱码、实例目录创建 "Permission denied" | `std::getenv` 返回 ANSI 字节 | 新增 `win32::get_env()`（`GetEnvironmentVariableW`），路径展开与 `WAYBAR_CONFIG_DIR` 均改用宽 API |
+| `uint` 未定义 | `uint` 是 POSIX `sys/types.h` 的扩展类型，MinGW 不提供 | 上游代码中改用 `unsigned int`（`AModule.hpp/.cpp`、`ALabel.cpp`） |
+| `fmt::localtime` 不存在 | 本机为 fmt 12，`fmt::localtime` 已被移除 | `simpleclock.cpp` 改用 `localtime_s`/`localtime_r` 包装 |
+| `PowerRegisterSuspendResumeNotification` 不可用 | MSYS2 头文件缺少新式 `DEVICE_NOTIFY_SUBSCRIBE_PARAMETERS` | 改用隐藏顶层窗口接收 `WM_POWERBROADCAST`（`src/win32/sleep.cpp`） |
+| `gdesktopappinfo.h` / `Gio::DesktopAppInfo` 缺失 | 该 API 属于 gio-unix，Windows 不提供 | `icon_loader.cpp` 仅在非 Windows 编译；`image-name` 类应用图标在 Windows 暂不可用（P3 视需要实现） |
+| `Gdk::Monitor::get_geometry()` 编译失败 | gtkmm 3 的签名是 `void get_geometry(Gdk::Rectangle&)` | 改为传引用 |
+| 圆角/透明是否可行 | 未知 | 已验证：GTK 自动 `WS_EX_LAYERED` + RGBA visual，逐像素 alpha 与 CSS `border-radius` 直接生效 |
+| 配置高度小于内容最小高度 | GTK 会强制窗口不小于内容尺寸 | `BarBackend` 取 `max(配置高度, 内容高度)`，同时保留上游的 "less than the minimum" 警告 |
+
+### 已端到端验证（P1 验收）
+
+- `config.jsonc`（含注释/尾逗号）与 `style.css` 原样加载；
+- 两条 bar（双显示器）分别定位到各自显示器顶部，`exclusive: true` 通过 AppBar 预留工作区；
+- 半透明背景、圆角、`linear-gradient`、中文与 emoji 正常渲染（截图为证）；
+- `custom/os`（`ver`）与 `custom/uptime`（PowerShell）执行成功；`clock` 正常走时；
+- 控制通道：`waybar --toggle/--show/--reload` 全部返回 `OK`，隐藏/恢复/重载生效；
+- 退出后工作区恢复、实例登记文件清理。

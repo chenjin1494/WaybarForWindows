@@ -35,20 +35,35 @@ waybar::modules::CustomGraph::CustomGraph(const std::string& name, const std::st
 
 waybar::modules::CustomGraph::~CustomGraph() {
   if (pid_ != -1) {
+#ifdef _WIN32
+    util::command::killChild(pid_);
+#else
     killpg(pid_, SIGTERM);
     waitpid(pid_, NULL, 0);
+#endif
     pid_ = -1;
   }
 }
 
 void waybar::modules::CustomGraph::delayWorker() {
   thread_ = [this] {
+#ifdef _WIN32
+    for (auto it = this->pid_children_.begin(); it != this->pid_children_.end();) {
+      int status = 0;
+      if (util::command::reap_child(*it, status)) {
+        it = this->pid_children_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+#else
     for (int i : this->pid_children_) {
       int status;
       waitpid(i, &status, 0);
     }
 
     this->pid_children_.clear();
+#endif
 
     bool can_update = true;
     if (config_["exec-if"].isString()) {
@@ -83,10 +98,16 @@ void waybar::modules::CustomGraph::continuousWorker() {
       }
     });
     size_t len = 0;
-    if (getline(&buff, &len, fp_) == -1) {
+#ifdef _WIN32
+    std::string line;
+    const bool eof = !util::command::read_line(fp_, line);
+#else
+    const bool eof = getline(&buff, &len, fp_) == -1;
+#endif
+    if (eof) {
       int exit_code = 1;
       if (fp_) {
-        exit_code = WEXITSTATUS(util::command::close(fp_, pid_));
+        exit_code = WB_EXIT_CODE(util::command::close(fp_, pid_));
         fp_ = nullptr;
       }
       if (exit_code != 0) {
@@ -112,7 +133,11 @@ void waybar::modules::CustomGraph::continuousWorker() {
         return;
       }
     } else {
+#ifdef _WIN32
+      std::string output = line;
+#else
       std::string output = buff;
+#endif
 
       // Remove last newline
       if (!output.empty() && output[output.length() - 1] == '\n') {

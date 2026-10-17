@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     安装/修复 WaybarForWindows 的 MSYS2 MINGW64 构建环境。

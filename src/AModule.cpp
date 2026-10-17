@@ -104,7 +104,7 @@ AModule::~AModule() {
   }
   for (const auto& pid : pid_children_) {
     if (pid != -1) {
-      killpg(pid, SIGTERM);
+      util::command::killChild(pid);
     }
   }
   if (menu_ != nullptr) {
@@ -197,7 +197,7 @@ bool AModule::handleRelease(GdkEventButton* const& e) { return handleUserEvent(e
 
 bool AModule::handleUserEvent(GdkEventButton* const& e) {
   std::string format{};
-  const std::map<std::pair<uint, GdkEventType>, std::string>::const_iterator& rec{
+  const std::map<std::pair<unsigned int, GdkEventType>, std::string>::const_iterator& rec{
       eventMap_.find(std::pair(e->button, e->type))};
 
   if (rec != eventMap_.cend()) {

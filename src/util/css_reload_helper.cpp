@@ -1,13 +1,15 @@
 #include "util/css_reload_helper.hpp"
 
-#include <poll.h>
 #include <spdlog/spdlog.h>
+#ifndef _WIN32
+#include <poll.h>
 #ifndef __OpenBSD__
 #include <sys/inotify.h>
 #else
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#endif
 #endif
 
 #include <filesystem>
@@ -18,6 +20,8 @@
 #include "config.hpp"
 #include "giomm/file.h"
 #include "glibmm/refptr.h"
+
+#include "util/fs.hpp"
 
 namespace {
 const std::regex IMPORT_REGEX(R"(@import\s+(?:url\()?(?:"|')([^"')]+)(?:"|')\)?;)");
@@ -32,7 +36,7 @@ std::string waybar::CssReloadHelper::getFileContents(const std::string& filename
     return {};
   }
 
-  std::ifstream file(filename);
+  auto file = waybar::util::open_ifstream(filename);
   if (!file.is_open()) {
     return {};
   }
@@ -43,7 +47,7 @@ std::string waybar::CssReloadHelper::getFileContents(const std::string& filename
 std::string waybar::CssReloadHelper::findPath(const std::string& filename) {
   // try path and fallback to looking relative to the config
   std::string result;
-  if (std::filesystem::exists(filename)) {
+  if (waybar::util::path_exists(filename)) {
     result = filename;
   } else {
     result = Config::findConfigPath({filename}).value_or("");
@@ -51,8 +55,8 @@ std::string waybar::CssReloadHelper::findPath(const std::string& filename) {
 
   // File monitor does not work with symlinks, so resolve them
   std::string original = result;
-  while (std::filesystem::is_symlink(result)) {
-    result = std::filesystem::read_symlink(result);
+  while (waybar::util::is_symlink_path(result)) {
+    result = waybar::util::read_symlink_path(result);
 
     // prevent infinite cycle
     if (result == original) {

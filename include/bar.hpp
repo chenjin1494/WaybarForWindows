@@ -15,11 +15,19 @@
 #include "AModule.hpp"
 #include "group.hpp"
 #include "util/kill_signal.hpp"
+
+#ifdef _WIN32
+#include "win32/bar_backend.hpp"
+#include "win32/layout.hpp"
+#else
 #include "xdg-output-unstable-v1-client-protocol.h"
+#endif
 
 #ifdef HAVE_BAR_BLUR
 struct ext_background_effect_surface_v1;
 #endif
+
+struct wl_surface;
 
 namespace waybar {
 
@@ -31,8 +39,10 @@ struct waybar_output {
   int32_t width;
   int32_t height;
 
+#ifndef _WIN32
   std::unique_ptr<struct zxdg_output_v1, decltype(&zxdg_output_v1_destroy)> xdg_output = {
       nullptr, &zxdg_output_v1_destroy};
+#endif
 };
 
 enum class bar_layer : uint8_t {
@@ -104,6 +114,11 @@ class Bar : public sigc::trackable {
   std::string bar_id;
 #endif
 
+#ifdef _WIN32
+  // Windows 平台后端（定位/置顶/AppBar/鼠标穿透）
+  win32::BarBackend& backend() { return *backend_; }
+#endif
+
  private:
   void onMap(GdkEventAny*);
   auto setupWidgets() -> void;
@@ -119,6 +134,13 @@ class Bar : public sigc::trackable {
   void onOutputGeometryChanged();
 #ifdef HAVE_BAR_BLUR
   void setupBackgroundBlur();
+#endif
+
+#ifdef _WIN32
+  win32::LayoutOptions buildLayoutOptions() const;
+  win32::MonitorInfo buildMonitorInfo() const;
+  void applyModeToBackend(const bar_mode& mode);
+  std::unique_ptr<win32::BarBackend> backend_;
 #endif
 
   /* Copy initial set of modes to allow customization */

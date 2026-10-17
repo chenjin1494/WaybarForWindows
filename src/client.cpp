@@ -1,14 +1,29 @@
 #include "client.hpp"
 
-#include <gtk-layer-shell.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <iostream>
 #include <utility>
 
+#ifdef _WIN32
+#include <gdk/gdkwin32.h>
+#include <glibmm/main.h>
+
 #include "gtkmm/icontheme.h"
+#include "util/clara.hpp"
+#include "util/format.hpp"
+#include "util/hex_checker.hpp"
+#include "win32/common.hpp"
+#include "win32/exec.hpp"
+#include "win32/paths.hpp"
+#else
+#include <gtk-layer-shell.h>
+
+#include <gdk/gdkwayland.h>
+
 #include "ext-idle-notify-v1-client-protocol.h"
+#include "gtkmm/icontheme.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 #include "util/clara.hpp"
 #include "util/format.hpp"
@@ -16,11 +31,14 @@
 #ifdef HAVE_BAR_BLUR
 #include "ext-background-effect-v1-client-protocol.h"
 #endif
+#endif
 
 waybar::Client* waybar::Client::inst() {
   static auto* c = new Client();
   return c;
 }
+
+#ifndef _WIN32
 
 void waybar::Client::handleGlobal(void* data, struct wl_registry* registry, uint32_t name,
                                   const char* interface, uint32_t version) {
@@ -91,10 +109,6 @@ struct waybar::waybar_output& waybar::Client::getOutput(void* addr) {
   return *it;
 }
 
-std::vector<Json::Value> waybar::Client::getOutputConfigs(struct waybar_output& output) {
-  return config.getOutputConfigs(output.name, output.identifier, output.width, output.height);
-}
-
 void waybar::Client::handleOutputLogicalSize(void* data, struct zxdg_output_v1* object,
                                              int32_t width, int32_t height) {
   auto client = waybar::Client::inst();
@@ -139,25 +153,6 @@ void waybar::Client::handleOutputDone(void* data, struct zxdg_output_v1* /*xdg_o
   }
 }
 
-void waybar::Client::createBarsBatch() {
-  pending_outputs_.remove_if([this](auto* output) { return std::none_of(outputs_.begin(), outputs_.end(), [&output](const auto& o) { return &o == output; }); });
-  for (auto* output : pending_outputs_) {
-    try {
-      auto configs = getOutputConfigs(*output);
-      if (!configs.empty()) {
-        for (const auto& config : configs) {
-          bars.emplace_back(std::make_unique<Bar>(output, config));
-        }
-      }
-    } catch (const std::exception& e) {
-      spdlog::warn("Error creating bar: {}", e.what());
-    }
-  }
-
-  pending_outputs_.clear();
-  bars_scheduled_ = false;
-}
-
 void waybar::Client::handleOutputName(void* data, struct zxdg_output_v1* /*xdg_output*/,
                                       const char* name) {
   auto* client = waybar::Client::inst();
@@ -184,10 +179,56 @@ void waybar::Client::handleOutputDescription(void* data, struct zxdg_output_v1* 
   }
 }
 
+#endif  // !_WIN32
+
+std::vector<Json::Value> waybar::Client::getOutputConfigs(struct waybar_output& output) {
+  return config.getOutputConfigs(output.name, output.identifier, output.width, output.height);
+}
+
+void waybar::Client::createBarsBatch() {
+  pending_outputs_.remove_if([this](auto* output) {
+    return std::none_of(outputs_.begin(), outputs_.end(),
+                        [&output](const auto& o) { return &o == output; });
+  });
+  for (auto* output : pending_outputs_) {
+    try {
+      auto configs = getOutputConfigs(*output);
+      if (!configs.empty()) {
+        for (const auto& config : configs) {
+          bars.emplace_back(std::make_unique<Bar>(output, config));
+        }
+      }
+    } catch (const std::exception& e) {
+      spdlog::warn("Error creating bar: {}", e.what());
+    }
+  }
+
+  pending_outputs_.clear();
+  bars_scheduled_ = false;
+}
+
 void waybar::Client::handleMonitorAdded(Glib::RefPtr<Gdk::Monitor> monitor) {
   auto& output = outputs_.emplace_back();
   output.monitor = std::move(monitor);
+#ifdef _WIN32
+  // Windows 没有 xdg-output 协议：直接从 GdkMonitor 取几何、型号与缩放。
+  Gdk::Rectangle geometry;
+  output.monitor->get_geometry(geometry);
+  const std::string model = output.monitor->get_model();
+  const std::string manufacturer = output.monitor->get_manufacturer();
+  const int index = static_cast<int>(outputs_.size()) - 1;
+
+  output.name = model.empty() ? ("MONITOR-" + std::to_string(index)) : model;
+  output.identifier = manufacturer.empty() ? output.name : (manufacturer + " " + model);
+  output.width = geometry.get_width();
+  output.height = geometry.get_height();
+
+  spdlog::info("Output detected: {} ({}) {}x{} scale={}", output.name, output.identifier,
+               output.width, output.height, output.monitor->get_scale_factor());
+  pending_outputs_.push_back(&output);
+#else
   handleOutput(output);
+#endif
 }
 
 void waybar::Client::handleMonitorRemoved(Glib::RefPtr<Gdk::Monitor> monitor) {
@@ -280,6 +321,8 @@ auto waybar::Client::setupCss(const std::string& css_file) -> void {
   }
 #endif
 }
+
+#ifndef _WIN32
 
 void waybar::Client::bindInterfaces() {
   registry = wl_display_get_registry(wl_display);
@@ -384,7 +427,8 @@ int waybar::Client::main(int argc, char* argv[]) {
   }
   m_cssFile = getStyle(style_opt);
   setupCss(m_cssFile);
-  m_cssReloadHelper = std::make_unique<CssReloadHelper>(m_cssFile, [&](const std::string& css_file) { setupCss(css_file); });
+  m_cssReloadHelper = std::make_unique<CssReloadHelper>(
+      m_cssFile, [&](const std::string& css_file) { setupCss(css_file); });
   if (portal) {
     portal->signal_appearance_changed().connect([&](waybar::Appearance appearance) {
       auto css_file = getStyle(style_opt, appearance);
@@ -420,3 +464,269 @@ void waybar::Client::reset() {
     portal->signal_appearance_changed().clear();
   }
 }
+
+#else  // _WIN32
+
+// ---------------------------------------------------------------- Windows 实现
+
+void waybar::Client::bindInterfaces() {
+  monitor_added_connection_.disconnect();
+  monitor_removed_connection_.disconnect();
+
+  outputs_.clear();
+  pending_outputs_.clear();
+  bars_scheduled_ = false;
+
+  for (int i = 0; i < gdk_display->get_n_monitors(); ++i) {
+    handleMonitorAdded(gdk_display->get_monitor(i));
+  }
+  monitor_added_connection_ = gdk_display->signal_monitor_added().connect(
+      sigc::mem_fun(*this, &Client::handleMonitorAdded));
+  monitor_removed_connection_ = gdk_display->signal_monitor_removed().connect(
+      sigc::mem_fun(*this, &Client::handleMonitorRemoved));
+
+  createBarsBatch();
+}
+
+void waybar::Client::startControlServer() {
+  control_server_ = std::make_unique<win32::ControlServer>();
+  control_signal_.connect(sigc::mem_fun(*this, &Client::handleControlRequest));
+
+  std::vector<std::string> bar_ids;
+  for (const auto& bar : bars) {
+    const std::string name = bar->config["name"].isString() ? bar->config["name"].asString() : "";
+    bar_ids.push_back(name.empty() ? std::string("bar-0") : name);
+  }
+
+  // 注意：handler 运行在控制服务线程，不能直接操作 GTK。
+  // 这里只把请求投递到主线程（SafeSignal -> Glib::Dispatcher），立即应答。
+  const auto handler = [this](const win32::ControlRequest& request) -> std::string {
+    control_signal_.emit(request);
+    return std::string("OK queued");
+  };
+
+  if (!control_server_->start(handler, config_file_, bar_ids)) {
+    spdlog::warn("Unable to start control server; --toggle/--reload will not work");
+  }
+}
+
+std::string waybar::Client::applyControlRequest(const win32::ControlRequest& request) {
+  spdlog::debug("control request: command='{}' bar='{}'", request.command, request.bar_id);
+
+  const std::string& command = request.command;
+  if (command.empty()) {
+    return "ERR missing command";
+  }
+
+  if (command == "reload") {
+    reload_requested_ = true;
+    Glib::signal_idle().connect_once([this]() { reset(); });
+    return "OK reloading";
+  }
+  if (command == "quit") {
+    Glib::signal_idle().connect_once([this]() { reset(); });
+    return "OK quitting";
+  }
+
+  int affected = 0;
+  for (auto& bar : bars) {
+    const std::string bar_name =
+        bar->config["name"].isString() ? bar->config["name"].asString() : "bar-0";
+    if (!request.bar_id.empty() && request.bar_id != bar_name) {
+      continue;
+    }
+    if (command == "toggle") {
+      bar->toggle();
+    } else if (command == "show") {
+      bar->show();
+    } else if (command == "hide") {
+      bar->hide();
+    } else if (command == "refresh") {
+      bar->handleSignal(0);
+    } else {
+      return "ERR unknown command '" + command + "'";
+    }
+    ++affected;
+  }
+
+  if (affected == 0 && !request.bar_id.empty()) {
+    return "ERR no such bar '" + request.bar_id + "'";
+  }
+  return "OK";
+}
+
+void waybar::Client::handleControlRequest(const win32::ControlRequest& request) {
+  // 由 control_signal_ 在主线程调用
+  try {
+    const std::string reply = applyControlRequest(request);
+    spdlog::debug("control '{}' -> {}", request.command, reply);
+  } catch (const std::exception& e) {
+    spdlog::error("control '{}' failed: {}", request.command, e.what());
+  }
+}
+
+int waybar::Client::main(int argc, char* argv[]) {
+  // 必须在任何 GTK/GDK 初始化之前设置 DPI 感知与控制台编码
+  win32::enable_dpi_awareness();
+  win32::setup_console();
+
+  bool show_help = false;
+  bool show_version = false;
+  bool list_outputs = false;
+  bool do_toggle = false;
+  bool do_show = false;
+  bool do_hide = false;
+  bool do_reload = false;
+  bool do_quit = false;
+  std::string config_opt;
+  std::string style_opt;
+  std::string log_level;
+
+  auto cli = clara::detail::Help(show_help) |
+             clara::detail::Opt(show_version)["-v"]["--version"]("Show version") |
+             clara::detail::Opt(list_outputs)["--list-outputs"]("List available outputs") |
+             clara::detail::Opt(config_opt, "config")["-c"]["--config"]("Config path") |
+             clara::detail::Opt(style_opt, "style")["-s"]["--style"]("Style path") |
+             clara::detail::Opt(
+                 log_level,
+                 "trace|debug|info|warning|error|critical|off")["-l"]["--log-level"]("Log level") |
+             clara::detail::Opt(bar_id, "id")["-b"]["--bar"]("Bar id") |
+             clara::detail::Opt(do_toggle)["--toggle"]("Toggle visibility of running instance") |
+             clara::detail::Opt(do_show)["--show"]("Show running instance") |
+             clara::detail::Opt(do_hide)["--hide"]("Hide running instance") |
+             clara::detail::Opt(do_reload)["--reload"]("Reload running instance") |
+             clara::detail::Opt(do_quit)["--quit"]("Quit running instance");
+
+  auto res = cli.parse(clara::detail::Args(argc, argv));
+  if (!res) {
+    spdlog::error("Error in command line: {}", res.errorMessage());
+    return 1;
+  }
+  if (show_help) {
+    std::cout << cli << '\n';
+    return 0;
+  }
+  if (show_version) {
+    std::cout << "Waybar v" << VERSION << " (Windows port)" << '\n';
+    return 0;
+  }
+  if (!log_level.empty()) {
+    spdlog::set_level(spdlog::level::from_str(log_level));
+  }
+
+  std::string control_command;
+  if (do_toggle) control_command = "toggle";
+  if (do_show) control_command = "show";
+  if (do_hide) control_command = "hide";
+  if (do_reload) control_command = "reload";
+  if (do_quit) control_command = "quit";
+
+  if (!control_command.empty()) {
+    win32::ControlRequest request;
+    request.command = control_command;
+    request.bar_id = bar_id;
+    request.style = style_opt;
+    request.config = config_opt;
+    const int handled = win32::send_control_command(request);
+    if (handled == 0) {
+      std::cerr << "No running waybar instance handled '" << control_command << "'" << std::endl;
+      return 1;
+    }
+    return 0;
+  }
+
+  // 只把程序名交给 GApplication：其余参数已由 clara 解析，
+  // 否则 GOption 会把 --config/--style 当成未知选项报错。
+  int gtk_argc = 1;
+  char* gtk_argv_storage[] = {argv[0], nullptr};
+  char** gtk_argv = gtk_argv_storage;
+  gtk_app = Gtk::Application::create(gtk_argc, gtk_argv, "fr.arouillard.waybar",
+                                     Gio::APPLICATION_NON_UNIQUE);
+
+  // Initialize Waybars GTK resources with our custom icons
+  auto theme = Gtk::IconTheme::get_default();
+  theme->add_resource_path("/fr/arouillard/waybar/icons");
+
+  gdk_display = Gdk::Display::get_default();
+  if (!gdk_display) {
+    throw std::runtime_error("Can't find display");
+  }
+
+  if (list_outputs) {
+    for (int i = 0; i < gdk_display->get_n_monitors(); ++i) {
+      auto monitor = gdk_display->get_monitor(i);
+      Gdk::Rectangle geometry;
+      Gdk::Rectangle workarea;
+      monitor->get_geometry(geometry);
+      monitor->get_workarea(workarea);
+      const std::string model = monitor->get_model();
+      const std::string manufacturer = monitor->get_manufacturer();
+      const std::string name = model.empty() ? ("MONITOR-" + std::to_string(i)) : model;
+      std::cout << "index=" << i << " name='" << name << "' identifier='" << manufacturer << " "
+                << model << "' geometry=" << geometry.get_width() << "x" << geometry.get_height()
+                << "+" << geometry.get_x() << "+" << geometry.get_y()
+                << " workarea=" << workarea.get_width() << "x" << workarea.get_height() << "+"
+                << workarea.get_x() << "+" << workarea.get_y()
+                << " scale=" << monitor->get_scale_factor()
+                << " primary=" << (monitor->is_primary() ? 1 : 0) << '\n';
+    }
+    return 0;
+  }
+
+  win32::init_job_object();
+
+  config.load(config_opt);
+  config_file_ = config_opt;
+
+  if (!portal) {
+    try {
+      portal = std::make_unique<waybar::Portal>();
+    } catch (const std::exception& e) {
+      spdlog::warn("Theme detection disabled: {}", e.what());
+    }
+  }
+
+  m_cssFile = getStyle(style_opt);
+  setupCss(m_cssFile);
+  m_cssReloadHelper = std::make_unique<CssReloadHelper>(
+      m_cssFile, [&](const std::string& css_file) { setupCss(css_file); });
+  if (portal) {
+    portal->signal_appearance_changed().connect([&](waybar::Appearance appearance) {
+      auto css_file = getStyle(style_opt, appearance);
+      m_cssReloadHelper->changeCssFile(css_file);
+      setupCss(css_file);
+    });
+  }
+
+  auto m_config = config.getConfig();
+  if (m_config.isObject() && m_config["reload_style_on_change"].asBool()) {
+    m_cssReloadHelper->monitorChanges();
+  } else if (m_config.isArray()) {
+    for (const auto& conf : m_config) {
+      if (conf["reload_style_on_change"].asBool()) {
+        m_cssReloadHelper->monitorChanges();
+        break;
+      }
+    }
+  }
+
+  bindInterfaces();
+  startControlServer();
+
+  gtk_app->hold();
+  gtk_app->run();
+
+  if (control_server_) control_server_->stop();
+  m_cssReloadHelper.reset();  // stop watching css file
+  bars.clear();
+  return 0;
+}
+
+void waybar::Client::reset() {
+  if (gtk_app) gtk_app->quit();
+  if (portal) {
+    portal->signal_appearance_changed().clear();
+  }
+}
+
+#endif  // _WIN32

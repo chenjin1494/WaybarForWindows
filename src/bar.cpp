@@ -1,7 +1,10 @@
 #include "bar.hpp"
 
-#include <gtk-layer-shell.h>
 #include <spdlog/spdlog.h>
+
+#ifndef _WIN32
+#include <gtk-layer-shell.h>
+#endif
 
 #include <algorithm>
 #include <ostream>
@@ -13,6 +16,12 @@
 #include "util/enum.hpp"
 #include "util/hosts_check.hpp"
 #include "util/kill_signal.hpp"
+
+#ifdef _WIN32
+#include <gdk/gdkwin32.h>
+
+#include "win32/common.hpp"
+#endif
 
 #ifdef HAVE_SWAY
 #include "modules/sway/bar.hpp"
@@ -241,6 +250,19 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
       sigc::mem_fun(*this, &Bar::onOutputGeometryChanged));
 
   // this has to be executed before GtkWindow.realize
+#ifdef _WIN32
+  // Windows：定位/置顶/工作区预留由 BarBackend 完成（gtk-layer-shell 不可用）
+  backend_ = std::make_unique<win32::BarBackend>(window, buildLayoutOptions(), buildMonitorInfo());
+  backend_->set_geometry_changed_callback([this]() {
+    if (!backend_) return;
+    backend_->set_monitor(buildMonitorInfo());
+    backend_->apply();
+  });
+  backend_->set_visible(true);
+  window.signal_size_allocate().connect([this](Gdk::Rectangle& rect) {
+    if (backend_) backend_->on_size_allocate(rect.get_width(), rect.get_height());
+  });
+#else
   auto* gtk_window = window.gobj();
   gtk_layer_init_for_window(gtk_window);
   gtk_layer_set_keyboard_mode(gtk_window, GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
@@ -252,6 +274,7 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, margins_.right);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, margins_.top);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, margins_.bottom);
+#endif
 
   window.set_size_request(width_, height_);
 
@@ -395,6 +418,10 @@ void waybar::Bar::setMode(const std::string& mode) {
 }
 
 void waybar::Bar::setMode(const struct bar_mode& mode) {
+#ifdef _WIN32
+  applyModeToBackend(mode);
+  return;
+#else
   auto* gtk_window = window.gobj();
 
   auto layer = GTK_LAYER_SHELL_LAYER_BOTTOM;
@@ -426,17 +453,25 @@ void waybar::Bar::setMode(const struct bar_mode& mode) {
    * certain scenarios, such as fully occluded bar.
    */
   forceLayerCommit();
+#endif
 }
 
 void waybar::Bar::forceLayerCommit() {
+#ifdef _WIN32
+  // Windows 侧修改窗口样式后由 SetWindowPos(SWP_FRAMECHANGED) 生效，无需额外提交。
+#else
   auto* gtk_window = window.gobj();
   if (gtk_window != nullptr && gtk_widget_get_realized(GTK_WIDGET(gtk_window))) {
     gtk_layer_try_force_commit(gtk_window);
   }
   wl_display_flush(Client::inst()->wl_display);
+#endif
 }
 
 void waybar::Bar::setPassThrough(bool passthrough) {
+#ifdef _WIN32
+  if (backend_) backend_->set_passthrough(passthrough);
+#else
   auto gdk_window = window.get_window();
   if (gdk_window) {
     Cairo::RefPtr<Cairo::Region> region;
@@ -445,9 +480,16 @@ void waybar::Bar::setPassThrough(bool passthrough) {
     }
     gdk_window->input_shape_combine_region(region, 0, 0);
   }
+#endif
 }
 
 void waybar::Bar::setPosition(Gtk::PositionType position) {
+#ifdef _WIN32
+  if (backend_) {
+    backend_->set_layout(buildLayoutOptions());
+    backend_->apply();
+  }
+#else
   std::array<gboolean, GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER> anchors;
   anchors.fill(TRUE);
 
@@ -486,6 +528,7 @@ void waybar::Bar::setPosition(Gtk::PositionType position) {
                     GTK_LAYER_SHELL_EDGE_BOTTOM}) {
     gtk_layer_set_anchor(window.gobj(), edge, anchors[edge]);
   }
+#endif
 }
 
 void waybar::Bar::onMap(GdkEventAny* /*unused*/) {
@@ -504,12 +547,19 @@ void waybar::Bar::onMap(GdkEventAny* /*unused*/) {
     return;
   }
 
+#ifdef _WIN32
+  // Windows 没有 Wayland surface；窗口挂载后由 BarBackend 接管 HWND。
+  if (backend_) backend_->on_map();
+  configureGlobalOffset(gdk_window_get_width(gdk_window), gdk_window_get_height(gdk_window));
+  setPassThrough(passthrough_);
+#else
   surface = gdk_wayland_window_get_wl_surface(gdk_window);
   configureGlobalOffset(gdk_window_get_width(gdk_window), gdk_window_get_height(gdk_window));
 
   setPassThrough(passthrough_);
 #ifdef HAVE_BAR_BLUR
   setupBackgroundBlur();
+#endif
 #endif
 }
 
@@ -861,6 +911,13 @@ void waybar::Bar::configureGlobalOffset(int width, int height) {
 
 void waybar::Bar::onOutputGeometryChanged() {
   configureGlobalOffset(window.get_width(), window.get_height());
+#ifdef _WIN32
+  if (backend_) {
+    backend_->set_monitor(buildMonitorInfo());
+    backend_->set_layout(buildLayoutOptions());
+    backend_->apply();
+  }
+#endif
 }
 
 void waybar::Bar::toggleSuspend(bool suspend) {
@@ -879,3 +936,63 @@ void waybar::Bar::toggleSuspend(bool suspend) {
     }
   }
 }
+
+#ifdef _WIN32
+// ---------------------------------------------------------------- Windows 后端适配
+
+waybar::win32::LayoutOptions waybar::Bar::buildLayoutOptions() const {
+  win32::LayoutOptions options;
+  if (config["position"].isString()) {
+    options.position = config["position"].asString();
+  }
+  if (config["width"].isUInt()) {
+    options.width = config["width"].asUInt();
+  }
+  if (config["height"].isUInt()) {
+    options.height = config["height"].asUInt();
+  }
+  options.margin_top = margins_.top;
+  options.margin_right = margins_.right;
+  options.margin_bottom = margins_.bottom;
+  options.margin_left = margins_.left;
+  return options;
+}
+
+waybar::win32::MonitorInfo waybar::Bar::buildMonitorInfo() const {
+  win32::MonitorInfo info;
+  if (output == nullptr || !output->monitor) {
+    return info;
+  }
+  Gdk::Rectangle geometry;
+  Gdk::Rectangle workarea;
+  output->monitor->get_geometry(geometry);
+  output->monitor->get_workarea(workarea);
+  info.geometry = {geometry.get_x(), geometry.get_y(), geometry.get_width(),
+                   geometry.get_height()};
+  info.workarea = {workarea.get_x(), workarea.get_y(), workarea.get_width(),
+                   workarea.get_height()};
+  info.scale = output->monitor->get_scale_factor();
+  info.name = output->name;
+  info.identifier = output->identifier;
+  info.primary = output->monitor->is_primary();
+  return info;
+}
+
+void waybar::Bar::applyModeToBackend(const struct bar_mode& mode) {
+  if (!backend_) {
+    return;
+  }
+  backend_->set_layout(buildLayoutOptions());
+  backend_->set_monitor(buildMonitorInfo());
+  backend_->set_topmost(mode.layer != bar_layer::BOTTOM);
+  backend_->set_exclusive(mode.exclusive);
+  backend_->set_passthrough(passthrough_ = mode.passthrough);
+  backend_->set_visible(mode.visible);
+  if (mode.visible) {
+    window.get_style_context()->remove_class("hidden");
+  } else {
+    window.get_style_context()->add_class("hidden");
+  }
+  backend_->apply();
+}
+#endif  // _WIN32

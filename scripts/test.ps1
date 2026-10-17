@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     运行 WaybarForWindows 的单元测试（meson test / Catch2）。

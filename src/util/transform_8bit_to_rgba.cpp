@@ -5,6 +5,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <system_error>
+
+#include "util/fs.hpp"
+
 namespace fs = std::filesystem;
 
 struct TransformResult {
@@ -13,9 +16,9 @@ struct TransformResult {
 };
 
 TransformResult transform_8bit_to_hex(const std::string& file_path) {
-  std::ifstream f(file_path, std::ios::in | std::ios::binary);
+  auto f = waybar::util::open_ifstream(file_path, std::ios::in | std::ios::binary);
   std::error_code ec;
-  const auto size = fs::file_size(file_path, ec);
+  const auto size = waybar::util::file_size_path(file_path, ec);
   if (ec || !f.is_open() || !f.good()) {
     throw std::runtime_error("Cannot open file: " + file_path);
   }

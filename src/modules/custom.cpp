@@ -51,6 +51,16 @@ void waybar::modules::Custom::delayWorker() {
   }
 
   thread_ = [this] {
+#ifdef _WIN32
+    for (auto it = this->pid_children_.begin(); it != this->pid_children_.end();) {
+      int status = 0;
+      if (util::command::reap_child(*it, status)) {
+        it = this->pid_children_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+#else
     for (auto it = this->pid_children_.begin(); it != this->pid_children_.end();) {
       int status = 0;
       const auto pid = static_cast<pid_t>(*it);
@@ -65,6 +75,7 @@ void waybar::modules::Custom::delayWorker() {
       }
       it = this->pid_children_.erase(it);
     }
+#endif
 
     bool can_update = true;
     if (config_["exec-if"].isString()) {

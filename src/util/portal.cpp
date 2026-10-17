@@ -1,7 +1,5 @@
 #include "util/portal.hpp"
 
-#include <giomm/dbusproxy.h>
-#include <glibmm/variant.h>
 #include <spdlog/spdlog.h>
 
 #include <iostream>
@@ -9,12 +7,21 @@
 
 #include "fmt/format.h"
 
+#ifdef _WIN32
+#include "win32/theme.hpp"
+#else
+#include <giomm/dbusproxy.h>
+#include <glibmm/variant.h>
+#endif
+
 namespace waybar {
+#ifndef _WIN32
 static constexpr const char* PORTAL_BUS_NAME = "org.freedesktop.portal.Desktop";
 static constexpr const char* PORTAL_OBJ_PATH = "/org/freedesktop/portal/desktop";
 static constexpr const char* PORTAL_INTERFACE = "org.freedesktop.portal.Settings";
 static constexpr const char* PORTAL_NAMESPACE = "org.freedesktop.appearance";
 static constexpr const char* PORTAL_KEY = "color-scheme";
+#endif
 }  // namespace waybar
 
 auto fmt::formatter<waybar::Appearance>::format(waybar::Appearance c, format_context& ctx) const {
@@ -32,6 +39,48 @@ auto fmt::formatter<waybar::Appearance>::format(waybar::Appearance c, format_con
   }
   return formatter<string_view>::format(name, ctx);
 }
+
+#ifdef _WIN32
+
+// ------------------------------------------------------------------ Windows
+//
+// 上游通过 XDG desktop portal 读取 color-scheme；Windows 上对应的是
+// HKCU\...\Themes\Personalize\AppsUseLightTheme，并用注册表通知监听变化。
+
+namespace waybar {
+
+struct Portal::Impl {
+  waybar::win32::ThemeWatcher watcher;
+};
+
+Portal::Portal() : impl_(std::make_unique<Impl>()) {
+  refreshAppearance();
+  impl_->watcher.start([this](bool light) {
+    const Appearance next = light ? Appearance::LIGHT : Appearance::DARK;
+    if (next == currentMode) return;
+    spdlog::info("Discovered appearance '{}'", next);
+    currentMode = next;
+    m_signal_appearance_changed.emit(currentMode);
+  });
+}
+
+Portal::~Portal() {
+  if (impl_) impl_->watcher.stop();
+}
+
+void Portal::refreshAppearance() {
+  const Appearance next =
+      waybar::win32::is_light_theme() ? Appearance::LIGHT : Appearance::DARK;
+  if (next == currentMode) return;
+  currentMode = next;
+  spdlog::info("Discovered appearance '{}'", currentMode);
+}
+
+Appearance Portal::getAppearance() { return currentMode; }
+
+}  // namespace waybar
+
+#else
 
 waybar::Portal::Portal()
     : Gio::DBus::Proxy(Gio::DBus::Connection::get_sync(Gio::DBus::BusType::BUS_TYPE_SESSION),
@@ -129,3 +178,5 @@ void waybar::Portal::on_signal(const Glib::ustring& sender_name, const Glib::ust
   currentMode = newMode;
   m_signal_appearance_changed.emit(currentMode);
 }
+
+#endif  // _WIN32

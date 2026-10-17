@@ -91,3 +91,21 @@
 - `custom/os`（`ver`）与 `custom/uptime`（PowerShell）执行成功；`clock` 正常走时；
 - 控制通道：`waybar --toggle/--show/--reload` 全部返回 `OK`，隐藏/恢复/重载生效；
 - 退出后工作区恢复、实例登记文件清理。
+
+---
+
+## 7. P2 模块实现记录
+
+| 模块 | Windows 数据源 | 关键实现点 |
+|---|---|---|
+| `cpu` / `cpu_usage` / `cpu_graph` | `NtQuerySystemInformation(SystemProcessorPerformanceInformation)` | 每逻辑处理器 idle/kernel/user 累计时间；索引 0 为总体，与 `/proc/stat` 语义对齐；`kernel` 已含 `idle` |
+| `cpu_frequency` | 注册表 `HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\<n>\~MHz` | 标称频率，非实时（MSYS2 头文件缺 `PROCESSOR_POWER_INFORMATION`） |
+| `memory` | `GlobalMemoryStatusEx` | 单位换算沿用上游（kiB）；swap 用“提交上限 − 物理内存”近似 |
+| `load` | PDH `\System\Processor Queue Length` + EMA | Windows 无 loadavg；1/5/15 分钟为指数滑动平均，属于 B 级语义映射 |
+| `disk` | `GetDiskFreeSpaceExW` | 以字节为“块”、`frsize=1`，复用上游百分比/fmt 逻辑；`/` → `%SystemDrive%`，`/mnt/c` → `C:\` |
+| `user` | `GetTickCount64` + GLib 用户名/家目录 | `{user}`/`{work_H}`/`{work_M}`/`{work_S}`/`{work_d}` 与上游一致 |
+| `battery` | `GetSystemPowerStatus` | 完整复刻上游 `format-{status}`/`format-{state}`/`format-time`/`full-at`/`events` 解析链；无电池时隐藏 |
+| `idle_inhibitor` | `SetThreadExecutionState` | 在 GTK 主线程调用（ES 状态按线程）；保留 `timeout`/`timeout-step`/`dynamic-timeouts`/滚动调时 |
+| `keyboard-state` | `GetKeyState` + `AttachThreadInput` | 必须先 attach 到前台窗口线程才能读到真实锁定状态 |
+
+新增链接库：`ntdll`（`NtQuerySystemInformation`）、`advapi32`（注册表）、`ole32`/`oleaut32`（后续 WMI/Core Audio）。

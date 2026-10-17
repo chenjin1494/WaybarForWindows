@@ -1,5 +1,16 @@
 #include "modules/load.hpp"
 
+#include <cmath>
+
+#ifndef _WIN32
+#include <cstdlib>
+#else
+#include <windows.h>
+#include <pdh.h>
+
+#include <mutex>
+#endif
+
 // In the 80000 version of fmt library authors decided to optimize imports
 // and moved declarations required for fmt::dynamic_format_arg_store in new
 // header fmt/args.h
@@ -50,6 +61,67 @@ auto waybar::modules::Load::update() -> void {
 }
 
 std::tuple<double, double, double> waybar::modules::Load::getLoad() {
+#ifdef _WIN32
+  // Windows 没有 POSIX load average。这里用 PDH 的 Processor Queue Length
+  // （可运行但等待 CPU 的线程数）+ 1（近似当前在跑的线程）作为瞬时负载，
+  // 再用 1/5/15 分钟时间常数做指数滑动平均，得到接近 uptime 语义的三个值。
+  static std::mutex mutex;
+  static PDH_HQUERY query = nullptr;
+  static PDH_HCOUNTER counter = nullptr;
+  static bool initialized = false;
+  static double ema1 = 0.0;
+  static double ema5 = 0.0;
+  static double ema15 = 0.0;
+  static ULONGLONG last_tick = 0;
+
+  std::lock_guard<std::mutex> lock(mutex);
+
+  if (!initialized) {
+    initialized = true;
+    if (PdhOpenQueryW(nullptr, 0, &query) == ERROR_SUCCESS) {
+      if (PdhAddEnglishCounterW(query, L"\\System\\Processor Queue Length", 0, &counter) !=
+          ERROR_SUCCESS) {
+        if (counter != nullptr) {
+          PdhRemoveCounter(counter);
+          counter = nullptr;
+        }
+        PdhCloseQuery(query);
+        query = nullptr;
+      }
+    }
+  }
+
+  double runnable = 1.0;
+  if (query != nullptr && counter != nullptr) {
+    if (PdhCollectQueryData(query) == ERROR_SUCCESS) {
+      PDH_FMT_COUNTERVALUE value{};
+      if (PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, nullptr, &value) == ERROR_SUCCESS) {
+        runnable += value.doubleValue;
+      }
+    }
+  }
+
+  const ULONGLONG now = GetTickCount64();
+  double dt = last_tick == 0 ? 0.0 : static_cast<double>(now - last_tick) / 1000.0;
+  last_tick = now;
+  if (dt <= 0.0) dt = 10.0;  // 首次采样按默认 interval 处理
+
+  const auto ema = [dt](double current, double sample, double tau_seconds) {
+    const double alpha = 1.0 - std::exp(-dt / tau_seconds);
+    return current + alpha * (sample - current);
+  };
+
+  if (ema1 == 0.0) ema1 = runnable;
+  if (ema5 == 0.0) ema5 = runnable;
+  if (ema15 == 0.0) ema15 = runnable;
+
+  ema1 = ema(ema1, runnable, 60.0);
+  ema5 = ema(ema5, runnable, 300.0);
+  ema15 = ema(ema15, runnable, 900.0);
+
+  const auto round2 = [](double value) { return std::ceil(value * 100.0) / 100.0; };
+  return {round2(ema1), round2(ema5), round2(ema15)};
+#else
   double load[3];
   if (getloadavg(load, 3) != -1) {
     double load1 = std::ceil(load[0] * 100.0) / 100.0;
@@ -58,4 +130,5 @@ std::tuple<double, double, double> waybar::modules::Load::getLoad() {
     return {load1, load5, load15};
   }
   throw std::runtime_error("Can't get system load");
+#endif
 }

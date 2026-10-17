@@ -81,3 +81,67 @@ tooltip {
 tooltip label {
     color: #e6edf3;
 }
+
+/* ------------------------------------------------ 核心模块（P2） */
+#cpu,
+#memory,
+#load,
+#disk {
+    padding: 0 10px;
+    color: #c0caf5;
+}
+
+#cpu {
+    color: #f7768e;
+}
+
+#memory {
+    color: #7aa2f7;
+}
+
+#load {
+    color: #e0af68;
+}
+
+#disk {
+    color: #9ece6a;
+}
+
+#battery {
+    padding: 0 10px;
+    color: #c3e88d;
+}
+
+#battery.charging,
+#battery.plugged {
+    color: #9ece6a;
+}
+
+#battery.warning:not(.charging) {
+    color: #e0af68;
+}
+
+#battery.critical:not(.charging) {
+    color: #f7768e;
+}
+
+#idle_inhibitor {
+    padding: 0 8px;
+}
+
+#idle_inhibitor.activated {
+    color: #9ece6a;
+}
+
+#idle_inhibitor.deactivated {
+    color: #7f849c;
+}
+
+#keyboard-state {
+    padding: 0 8px;
+    color: #7f849c;
+}
+
+#keyboard-state label.locked {
+    color: #e0af68;
+}

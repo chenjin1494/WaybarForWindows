@@ -1,7 +1,7 @@
 // Waybar for Windows 默认配置
 //
 // 语法与上游 Waybar 完全一致（JSONC：允许注释与尾逗号），可直接使用上游配置。
-// 本文件只启用当前移植阶段已实现且跨平台语义一致的模块；其余模块的示例见注释。
+// 当前启用的是 Windows 移植已实现的核心模块；其余模块见 docs/MODULE-MATRIX.md。
 {
     "layer": "top",
     "position": "top",
@@ -9,12 +9,19 @@
     "spacing": 8,
 
     "modules-left": [
-        "custom/hello"
+        "custom/hello",
+        "cpu",
+        "memory",
+        "load"
     ],
     "modules-center": [
         "clock"
     ],
     "modules-right": [
+        "disk",
+        "battery",
+        "idle_inhibitor",
+        "keyboard-state",
         "custom/os",
         "custom/uptime"
     ],
@@ -27,6 +34,56 @@
     "clock": {
         "format": "{:%H:%M:%S}",
         "tooltip-format": "{:%Y-%m-%d %A}"
+    },
+    "cpu": {
+        "interval": 2,
+        "format": "CPU {usage}%",
+        "tooltip": false
+    },
+    "memory": {
+        "interval": 5,
+        "format": "RAM {used:0.1f}/{total:0.1f} GiB",
+        "tooltip": false,
+        "unit": "GiB"
+    },
+    "load": {
+        "interval": 5,
+        "format": "L {load1:.2f}",
+        "tooltip": false
+    },
+    "disk": {
+        "interval": 60,
+        "format": " {percentage_used}%",
+        "paths": ["/"],
+        "tooltip-format": "{used} used out of {total} on {path} ({percentage_used}%)"
+    },
+    "battery": {
+        "interval": 30,
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ⚡",
+        "format-plugged": "{capacity}% 🔌",
+        "format-full": "{capacity}% ✅",
+        "tooltip-format": "{timeTo} ({capacity}%)"
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "🌙",
+            "deactivated": "☕"
+        },
+        "tooltip-format-activated": "保持唤醒中",
+        "tooltip-format-deactivated": "允许休眠"
+    },
+    "keyboard-state": {
+        "numlock": true,
+        "capslock": true,
+        "scrolllock": false,
+        "interval": 1,
+        "format": "{icon}",
+        "format-icons": {
+            "locked": "🔒",
+            "unlocked": "🔓"
+        }
     },
     "custom/os": {
         // 一次性输出：interval 省略时 exec 只执行一次

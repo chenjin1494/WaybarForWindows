@@ -53,23 +53,29 @@
 #include "modules/wayfire/window.hpp"
 #include "modules/wayfire/workspaces.hpp"
 #endif
-#if defined(__FreeBSD__) || defined(__linux__)
+#if defined(__FreeBSD__) || defined(__linux__) || defined(_WIN32)
+#ifdef _WIN32
+#include "modules/windows/battery.hpp"
+#else
 #include "modules/battery.hpp"
 #endif
-#if defined(HAVE_CPU_LINUX) || defined(HAVE_CPU_BSD)
+#endif
+#if defined(HAVE_CPU_LINUX) || defined(HAVE_CPU_BSD) || defined(HAVE_CPU_WINDOWS)
 #include "modules/cpu.hpp"
 #include "modules/cpu_frequency.hpp"
 #include "modules/cpu_graph.hpp"
 #include "modules/cpu_usage.hpp"
 #include "modules/load.hpp"
 #endif
+#ifdef _WIN32
+#include "modules/windows/idle_inhibitor.hpp"
+#else
 #include "modules/idle_inhibitor.hpp"
-#if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD)
+#endif
+#if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD) || defined(HAVE_MEMORY_WINDOWS)
 #include "modules/memory.hpp"
 #endif
-#ifndef _WIN32
 #include "modules/disk.hpp"
-#endif
 #ifdef HAVE_DBUSMENU
 #include "modules/sni/tray.hpp"
 #endif
@@ -83,8 +89,12 @@
 #include "modules/backlight.hpp"
 #include "modules/backlight_slider.hpp"
 #endif
-#ifdef HAVE_LIBEVDEV
+#if defined(HAVE_LIBEVDEV) || defined(_WIN32)
+#ifdef _WIN32
+#include "modules/windows/keyboard_state.hpp"
+#else
 #include "modules/keyboard_state.hpp"
+#endif
 #endif
 #ifdef HAVE_GAMEMODE
 #include "modules/gamemode.hpp"
@@ -146,7 +156,7 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     auto hash_pos = name.find('#');
     auto ref = name.substr(0, hash_pos);
     auto id = hash_pos != std::string::npos ? name.substr(hash_pos + 1) : "";
-#if defined(__FreeBSD__) || defined(__linux__)
+#if defined(__FreeBSD__) || defined(__linux__) || defined(_WIN32)
     if (ref == "battery") {
       return new waybar::modules::Battery(id, bar_, config_[name]);
     }
@@ -274,25 +284,21 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     }
 #endif
     if (ref == "idle_inhibitor") {
-#ifndef _WIN32
       return new waybar::modules::IdleInhibitor(id, bar_, config_[name]);
-#else
-      throw std::runtime_error("idle_inhibitor is not implemented on Windows yet");
-#endif
     }
-#if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD)
+#if defined(HAVE_MEMORY_LINUX) || defined(HAVE_MEMORY_BSD) || defined(HAVE_MEMORY_WINDOWS)
     if (ref == "memory") {
       return new waybar::modules::Memory(id, config_[name]);
     }
 #endif
-#if defined(HAVE_CPU_LINUX) || defined(HAVE_CPU_BSD)
+#if defined(HAVE_CPU_LINUX) || defined(HAVE_CPU_BSD) || defined(HAVE_CPU_WINDOWS)
     if (ref == "cpu") {
       return new waybar::modules::Cpu(id, config_[name]);
     }
     if (ref == "cpu_graph") {
       return new waybar::modules::CpuGraph(id, config_[name]);
     }
-#if defined(HAVE_CPU_LINUX)
+#if defined(HAVE_CPU_LINUX) || defined(HAVE_CPU_WINDOWS)
     if (ref == "cpu_frequency") {
       return new waybar::modules::CpuFrequency(id, config_[name]);
     }
@@ -307,14 +313,12 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "clock") {
       return new waybar::modules::Clock(id, config_[name]);
     }
-#ifndef _WIN32
     if (ref == "user") {
       return new waybar::modules::User(id, config_[name]);
     }
     if (ref == "disk") {
       return new waybar::modules::Disk(id, config_[name]);
     }
-#endif
     if (ref == "image") {
       return new waybar::modules::Image(id, config_[name]);
     }
@@ -336,7 +340,7 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
       return new waybar::modules::BacklightSlider(id, config_[name]);
     }
 #endif
-#ifdef HAVE_LIBEVDEV
+#if defined(HAVE_LIBEVDEV) || defined(_WIN32)
     if (ref == "keyboard-state") {
       return new waybar::modules::KeyboardState(id, bar_, config_[name]);
     }

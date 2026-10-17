@@ -53,7 +53,7 @@ void BarBackend::on_realize() {
   if (hwnd_ != nullptr) return;
   GdkWindow* gdk_window = window_.get_window() ? window_.get_window()->gobj() : nullptr;
   if (gdk_window == nullptr) {
-    spdlog::warn("[win32] bar window not realized yet");
+    spdlog::debug("[win32] bar window not realized yet, deferring");
     return;
   }
   hwnd_ = static_cast<HWND>(gdk_win32_window_get_handle(gdk_window));

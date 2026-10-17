@@ -1,7 +1,9 @@
 #pragma once
 
 #include <fmt/format.h>
+#ifndef _WIN32
 #include <sys/statvfs.h>
+#endif
 
 #include <fstream>
 #include <vector>

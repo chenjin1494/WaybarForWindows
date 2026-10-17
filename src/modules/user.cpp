@@ -2,7 +2,11 @@
 
 #include <fmt/chrono.h>
 #include <glibmm/miscutils.h>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <windows.h>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -51,6 +55,10 @@ bool User::handleToggle(GdkEventButton* const& e) {
 
 long User::uptime_as_seconds() {
   long uptime = 0;
+
+#ifdef _WIN32
+  uptime = static_cast<long>(GetTickCount64() / 1000ULL);
+#endif
 
 #if HAVE_CPU_LINUX
   struct sysinfo s_info;

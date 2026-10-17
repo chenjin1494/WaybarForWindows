@@ -132,6 +132,10 @@ if is_windows
         compiler.find_library('propsys'),
         compiler.find_library('bthprops'),
         compiler.find_library('version'),
+    compiler.find_library('ntdll'),
+    compiler.find_library('advapi32'),
+    compiler.find_library('ole32'),
+    compiler.find_library('oleaut32'),
     ]
 else
     wayland_client = dependency('wayland-client')
@@ -304,18 +308,30 @@ if is_windows
         'src/win32/theme.cpp',
         'src/win32/sleep.cpp',
     )
-    # P1：先交付核心 Shell 与 custom/image/clock 模块；其余模块在 P2 逐个接入。
+    # 核心模块（P2）：CPU/内存/负载/磁盘/用户/电池/键盘锁定/防休眠
     src_files += files(
         'src/modules/simpleclock.cpp',
+        'src/modules/disk.cpp',
+        'src/modules/load.cpp',
+        'src/modules/user.cpp',
+        'src/modules/cpu.cpp',
+        'src/modules/cpu_graph.cpp',
+        'src/modules/cpu_frequency/common.cpp',
+        'src/modules/cpu_frequency/windows.cpp',
+        'src/modules/cpu_usage/common.cpp',
+        'src/modules/cpu_usage/windows.cpp',
+        'src/modules/memory/common.cpp',
+        'src/modules/memory/windows.cpp',
+        'src/modules/windows/battery.cpp',
+        'src/modules/windows/idle_inhibitor.cpp',
+        'src/modules/windows/keyboard_state.cpp',
     )
     add_project_arguments('-DHAVE_WIN32_PLATFORM', language: 'cpp')
+    add_project_arguments('-DHAVE_CPU_WINDOWS', language: 'cpp')
+    add_project_arguments('-DHAVE_MEMORY_WINDOWS', language: 'cpp')
 else
     src_files += files(
-        'src/modules/disk.cpp',
-        'src/modules/idle_inhibitor.cpp',
-        'src/modules/load.cpp',
         'src/modules/temperature.cpp',
-        'src/modules/user.cpp',
         'src/util/icon_loader.cpp',
     )
 endif

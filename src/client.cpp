@@ -16,6 +16,7 @@
 #include "util/hex_checker.hpp"
 #include "win32/common.hpp"
 #include "win32/exec.hpp"
+#include "win32/fullscreen.hpp"
 #include "win32/paths.hpp"
 #else
 #include <gtk-layer-shell.h>
@@ -205,6 +206,14 @@ void waybar::Client::createBarsBatch() {
 
   pending_outputs_.clear();
   bars_scheduled_ = false;
+#ifdef _WIN32
+  // bar 重建后旧的隐藏记录已失效，重新开始检测
+  fullscreen_hidden_bars_.clear();
+  fullscreen_active_ = false;
+  fullscreen_window_ = nullptr;
+  fullscreen_exit_ticks_ = 0;
+  startFullscreenWatch();
+#endif
 }
 
 void waybar::Client::handleMonitorAdded(Glib::RefPtr<Gdk::Monitor> monitor) {
@@ -510,6 +519,83 @@ void waybar::Client::startControlServer() {
   }
 }
 
+#ifdef _WIN32
+void waybar::Client::startFullscreenWatch() {
+  if (fullscreen_watch_.connected()) {
+    return;
+  }
+  // 400ms 轮询：SHQueryUserNotificationState 很便宜，足够在切屏时及时响应。
+  fullscreen_watch_ = Glib::signal_timeout().connect(
+      [this] {
+        checkFullscreen();
+        return true;
+      },
+      400);
+}
+
+void waybar::Client::checkFullscreen() {
+  std::vector<HWND> own_windows;
+  own_windows.reserve(bars.size());
+  for (auto& bar : bars) {
+    if (auto hwnd = bar->backend().hwnd(); hwnd != nullptr) {
+      own_windows.push_back(hwnd);
+    }
+  }
+
+  // 优先沿用已记录的全屏窗口：隐藏 bar 会改变前台窗口，若只看前台会导致反复收起/展开。
+  bool fullscreen = false;
+  HWND candidate = nullptr;
+  if (fullscreen_window_ != nullptr &&
+      waybar::win32::window_is_fullscreen(fullscreen_window_, own_windows)) {
+    fullscreen = true;
+    candidate = fullscreen_window_;
+  } else if (waybar::win32::foreground_is_fullscreen(own_windows)) {
+    fullscreen = true;
+    candidate = GetForegroundWindow();
+  }
+
+  if (fullscreen) {
+    fullscreen_exit_ticks_ = 0;
+    if (!fullscreen_active_) {
+      fullscreen_active_ = true;
+      fullscreen_window_ = candidate;
+      fullscreen_hidden_bars_.clear();
+      for (auto& bar : bars) {
+        if (bar->config["hide-on-fullscreen"].isBool() &&
+            !bar->config["hide-on-fullscreen"].asBool()) {
+          continue;
+        }
+        bar->setWindowHidden(true);
+        fullscreen_hidden_bars_.push_back(bar.get());
+      }
+      spdlog::info("Fullscreen application detected, hiding {} bar(s)",
+                   fullscreen_hidden_bars_.size());
+    }
+    return;
+  }
+
+  if (!fullscreen_active_) {
+    return;
+  }
+
+  // 退出全屏后等待 2 个周期（约 800ms）再恢复，避免切屏瞬间的抖动
+  if (++fullscreen_exit_ticks_ < 2) {
+    return;
+  }
+
+  for (auto* bar : fullscreen_hidden_bars_) {
+    if (bar != nullptr) {
+      bar->setWindowHidden(false);
+    }
+  }
+  spdlog::info("Fullscreen application exited, restoring {} bar(s)",
+               fullscreen_hidden_bars_.size());
+  fullscreen_hidden_bars_.clear();
+  fullscreen_active_ = false;
+  fullscreen_window_ = nullptr;
+  fullscreen_exit_ticks_ = 0;
+}
+#endif
 std::string waybar::Client::applyControlRequest(const win32::ControlRequest& request) {
   spdlog::debug("control request: command='{}' bar='{}'", request.command, request.bar_id);
 

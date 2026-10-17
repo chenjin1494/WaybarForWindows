@@ -671,6 +671,14 @@ void waybar::Bar::updateBlurRegion() {
 }
 #endif
 
+void waybar::Bar::setWindowHidden(bool hidden) {
+#ifdef _WIN32
+  if (backend_) backend_->set_window_hidden(hidden);
+#else
+  (void)hidden;
+#endif
+}
+
 void waybar::Bar::setVisible(bool value) {
   visible = value;
   if (auto mode = config.get("mode", {}); mode.isString()) {

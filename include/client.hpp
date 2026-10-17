@@ -89,6 +89,10 @@ class Client {
   // 在主线程执行一条控制请求，返回应答文本（"OK" / "ERR ..."）
   std::string applyControlRequest(const win32::ControlRequest& request);
   void handleControlRequest(const win32::ControlRequest& request);
+
+  // 全屏应用检测：进入全屏时收起 bar，退出后恢复（类似 Wayland 合成器行为）
+  void startFullscreenWatch();
+  void checkFullscreen();
 #endif
 
   Glib::RefPtr<Gtk::StyleContext> style_context_;
@@ -106,6 +110,12 @@ class Client {
   waybar::SafeSignal<win32::ControlRequest> control_signal_;
   bool reload_requested_ = false;
   std::string config_file_;
+
+  sigc::connection fullscreen_watch_;
+  bool fullscreen_active_ = false;
+  HWND fullscreen_window_ = nullptr;
+  int fullscreen_exit_ticks_ = 0;
+  std::vector<Bar*> fullscreen_hidden_bars_;
 #endif
 };
 

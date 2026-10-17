@@ -340,6 +340,7 @@ if is_windows
         'src/modules/windows/taskbar.cpp',
         'src/modules/cffi.cpp',
         'src/win32/wmi.cpp',
+        'src/win32/fullscreen.cpp',
         'src/modules/windows/network.cpp',
         'src/modules/windows/pulseaudio.cpp',
     )

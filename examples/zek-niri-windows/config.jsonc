@@ -11,6 +11,7 @@
     "position": "top",
     "fixed-center": true,
     "height": 30,
+    "hide-on-fullscreen": true,
     "reload_style_on_change": false,
     "include": [
         "modules.jsonc",

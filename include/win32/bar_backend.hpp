@@ -37,6 +37,8 @@ class BarBackend {
   void apply();
 
   void set_visible(bool visible);
+  // 真正的窗口隐藏（全屏应用时使用）：同时移除 AppBar 预留并隐藏输入层
+  void set_window_hidden(bool hidden);
   void set_passthrough(bool passthrough);
   void set_exclusive(bool exclusive);
   void set_topmost(bool topmost);
@@ -85,6 +87,7 @@ class BarBackend {
 
   bool appbar_registered_ = false;
   bool visible_ = true;
+  bool window_hidden_ = false;
   bool passthrough_ = false;
   bool exclusive_ = false;
   bool topmost_ = false;

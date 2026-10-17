@@ -300,6 +300,19 @@ void BarBackend::apply_window_styles() {
   styles_applied_ = true;
 }
 
+void BarBackend::set_window_hidden(bool hidden) {
+  if (window_hidden_ == hidden) return;
+  window_hidden_ = hidden;
+  if (hidden) {
+    unregister_appbar();
+    if (input_hwnd_ != nullptr) ShowWindow(input_hwnd_, SW_HIDE);
+    if (hwnd_ != nullptr) ShowWindow(hwnd_, SW_HIDE);
+  } else {
+    if (hwnd_ != nullptr) ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
+    apply();
+  }
+}
+
 void BarBackend::set_visible(bool visible) {
   if (visible_ == visible) return;
   visible_ = visible;

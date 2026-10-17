@@ -84,6 +84,8 @@ class Bar : public sigc::trackable {
 
   void setMode(const std::string& mode);
   void setVisible(bool value);
+  // 全屏应用时真正隐藏原生窗口（不改变模块更新与手动显示状态）
+  void setWindowHidden(bool hidden);
   void toggle();
   void show();
   void hide();

@@ -123,7 +123,7 @@ bool write_volume(double volume, bool mute) {
 }  // namespace
 
 Pulseaudio::Pulseaudio(const std::string& id, const Json::Value& config)
-    : ALabel(config, "pulseaudio", id, "{icon} {volume}%", 5),
+    : ALabel(config, "pulseaudio", id, "{icon} {volume}%", 5, false, true, true),
       scroll_step_(config_["scroll-step"].isInt() ? config_["scroll-step"].asInt() : 5),
       max_volume_(config_["max-volume"].isInt() ? config_["max-volume"].asInt() : 100) {
   thread_ = [this] {

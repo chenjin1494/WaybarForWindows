@@ -68,6 +68,15 @@ std::string last_error(DWORD code) {
 }
 
 void setup_console() {
+  // 从开始菜单/开机启动运行时避免弹出黑色控制台窗口；从 cmd/PowerShell 启动时
+  // 保持控制台（便于 --version、日志和管道输出）。
+  if (HWND console = GetConsoleWindow(); console != nullptr) {
+    DWORD pids[8] = {};
+    const DWORD count = GetConsoleProcessList(pids, static_cast<DWORD>(std::size(pids)));
+    if (count <= 1) {
+      ShowWindow(console, SW_HIDE);
+    }
+  }
   // 控制台可能不存在（GUI 启动），全部失败均可忽略
   SetConsoleOutputCP(CP_UTF8);
   SetConsoleCP(CP_UTF8);

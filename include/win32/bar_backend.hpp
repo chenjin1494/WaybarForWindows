@@ -61,6 +61,10 @@ class BarBackend {
   void update_size_and_position();
   void register_appbar();
   void unregister_appbar();
+
+  void ensure_input_window();
+  void destroy_input_window();
+  void sync_input_window();
   void update_appbar_position();
   void refresh_content_size();
 
@@ -75,6 +79,7 @@ class BarBackend {
   MonitorInfo monitor_;
 
   HWND hwnd_ = nullptr;
+  HWND input_hwnd_ = nullptr;
   WNDPROC original_proc_ = nullptr;
   UINT taskbar_created_message_ = 0;
 

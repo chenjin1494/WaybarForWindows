@@ -65,7 +65,7 @@ bool set_profile(const std::string& profile) {
 }  // namespace
 
 PowerProfilesDaemon::PowerProfilesDaemon(const std::string& id, const Json::Value& config)
-    : ALabel(config, "power-profiles-daemon", id, "{icon}", 5) {
+    : ALabel(config, "power-profiles-daemon", id, "{icon}", 5, false, true, true) {
   current_ = active_profile();
   thread_ = [this] {
     dp.emit();

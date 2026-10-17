@@ -113,3 +113,54 @@ waybar.exe --config D:\tools\zek-test\waybar\config.jsonc `
 - `themes/all-modules/` —— 全模块示例配置
 
 用法：复制到 `%LOCALAPPDATA%\Programs\Waybar\config\`（或自己的配置目录）即可。
+## 8. 第三轮：高度、点击、焦点与滚轮（本次修复）
+
+把主题部署到安装目录并实际使用后，发现并修复了 4 个 Windows 平台层问题：
+
+### 8.1 高度被撑到 47px
+
+GTK3 的 Win32 后端在没有 `default_size` 时，会把顶层窗口的最小高度钳制到“装饰尺寸”
+（本机 47px），即使 `set_decorated(false)`；`height:30` 的配置因此无效。
+
+修复：Windows 下对 bar 窗口设置 `set_resizable(false)` + `set_size_request(显示器宽, height)`
++ `set_default_size(显示器宽, height)`。实测该主题最终高度为 34px（内容自然高度），
+与上游观感一致。
+
+### 8.2 透明区域点击穿透（很多按钮点不到）
+
+GTK 的 RGBA 顶层窗口在 Windows 上使用 `UpdateLayeredWindow`，**完全透明的像素不参与命中测试**：
+主题大量使用透明背景，导致只有文字/图标笔画能点，模块空白处点击直接落到桌面。
+
+修复：在 bar 正上方增加一个几乎不可见（uniform alpha=1）的输入窗口，把
+`WM_MOUSEMOVE / WM_LBUTTON* / WM_RBUTTON* / WM_MBUTTON* / WM_MOUSEWHEEL / WM_MOUSEHWHEEL`
+转发给 bar 窗口。整条 bar 任意位置都可点击，拖拽仍由 GTK 的鼠标捕获处理。
+
+### 8.3 部分模块点击/滚轮无效
+
+`ALabel` 的点击/滚轮事件默认不注册（`enable_click=false`、`enable_scroll=false`），
+需要模块显式开启。修复：
+
+| 模块 | 修复 |
+|---|---|
+| `power-profiles-daemon` | `enable_click`/`enable_scroll`（左键/滚轮循环电源计划，实测切换到“高性能”） |
+| `idle_inhibitor` | `enable_click`（左键切换防休眠） |
+| `backlight` | `enable_scroll`（滚轮调亮度） |
+| `pulseaudio` | `enable_click` + `enable_scroll`（左键静音、滚轮调音量） |
+
+### 8.4 bar 抢占前台窗口
+
+状态栏窗口曾成为前台窗口，导致 `sway/window` 显示为空、用户正在输入的应用失焦。
+修复：`WM_MOUSEACTIVATE -> MA_NOACTIVATE`、`gtk_window_set_accept_focus(false)`、
+`gtk_window_set_focus_on_map(false)`。修复后 `sway/window` 能正确显示
+“主文件夹 - 文件资源管理器”等真实前台窗口标题。
+
+另外：从开始菜单/资源管理器启动时隐藏控制台窗口（`GetConsoleProcessList` 判断），
+从 cmd/PowerShell 启动时保留输出。
+
+### 8.5 验证结果
+
+- 高度：`Bar configured (width: 1920, height: 34)`（此前恒为 47）
+- 点击：颜色主题切换、截图（SnippingTool）、终端、资源管理器、网络/电池设置、
+  电源计划切换、通知/电源设置均实测生效
+- 前台窗口标题、配色切换脚本（`style.css` 的 `@import` 双向切换）正常
+- `meson test` 通过

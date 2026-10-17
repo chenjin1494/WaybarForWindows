@@ -10,6 +10,7 @@
     "layer": "top",
     "position": "top",
     "fixed-center": true,
+    "height": 30,
     "reload_style_on_change": false,
     "include": [
         "modules.jsonc",

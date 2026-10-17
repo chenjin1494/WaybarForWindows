@@ -12,7 +12,7 @@
 namespace waybar::modules {
 
 Backlight::Backlight(const std::string& id, const Json::Value& config)
-    : ALabel(config, "backlight", id, "{percent}%", 5),
+    : ALabel(config, "backlight", id, "{percent}%", 5, false, false, true),
       scroll_step_(config_["scroll-step"].isDouble() ? static_cast<int>(config_["scroll-step"].asDouble())
                                                      : 10),
       min_brightness_(config_["min-brightness"].isDouble()

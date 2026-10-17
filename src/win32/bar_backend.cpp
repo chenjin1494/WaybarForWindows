@@ -28,6 +28,86 @@ std::unordered_map<HWND, BarBackend*>& registry() {
 
 constexpr UINT kAppBarCallback = WM_APP + 0x51;
 
+// ---------------------------------------------------------------- 输入层
+//
+// GTK 的 RGBA 顶层窗口在 Windows 上使用分层窗口（UpdateLayeredWindow），
+// 完全透明（alpha=0）的像素不参与命中测试：bar 背景透明时，只有文字/图标
+// 笔画能点到，模块空白区域会“穿透”到桌面，表现为很多点击无效。
+// 这里在 bar 正上方放一个几乎不可见（uniform alpha=1）的输入窗口，把鼠标消息
+// 转发给 bar 窗口，使整条 bar 都可点击；拖拽时 GTK 会 SetCapture，仍由 bar 处理。
+constexpr wchar_t kInputClass[] = L"WaybarInput";
+std::atomic<bool> g_input_class_registered{false};
+
+std::mutex& input_registry_mutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+
+std::unordered_map<HWND, HWND>& input_registry() {
+  static std::unordered_map<HWND, HWND> map;  // input -> bar
+  return map;
+}
+
+void register_input(HWND input, HWND bar) {
+  std::lock_guard<std::mutex> lock(input_registry_mutex());
+  input_registry()[input] = bar;
+}
+
+void unregister_input(HWND input) {
+  std::lock_guard<std::mutex> lock(input_registry_mutex());
+  input_registry().erase(input);
+}
+
+LRESULT CALLBACK input_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+  HWND bar = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(input_registry_mutex());
+    auto it = input_registry().find(hwnd);
+    if (it != input_registry().end()) bar = it->second;
+  }
+
+
+  switch (message) {
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL:
+      if (bar != nullptr && IsWindow(bar)) {
+        // 两个窗口矩形完全一致，客户区坐标可直接复用（滚轮消息本就是屏幕坐标）。
+
+        PostMessageW(bar, message, wparam, lparam);
+      }
+      return 0;
+    default:
+      break;
+  }
+  return DefWindowProcW(hwnd, message, wparam, lparam);
+}
+
+bool ensure_input_class() {
+  if (g_input_class_registered.load()) return true;
+  WNDCLASSEXW wc{};
+  wc.cbSize = sizeof(wc);
+  wc.lpfnWndProc = &input_proc;
+  wc.hInstance = GetModuleHandleW(nullptr);
+  wc.lpszClassName = kInputClass;
+  wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+  if (RegisterClassExW(&wc) == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+    spdlog::warn("[win32] failed to register input window class: {}", last_error());
+    return false;
+  }
+  g_input_class_registered.store(true);
+  return true;
+}
+
 }  // namespace
 
 BarBackend::BarBackend(Gtk::Window& window, const LayoutOptions& options,
@@ -39,7 +119,30 @@ BarBackend::BarBackend(Gtk::Window& window, const LayoutOptions& options,
 
 BarBackend::~BarBackend() {
   unregister_appbar();
+  destroy_input_window();
   remove_window_hook();
+}
+
+void BarBackend::ensure_input_window() {
+  if (input_hwnd_ != nullptr || hwnd_ == nullptr) return;
+  if (!ensure_input_class()) return;
+  input_hwnd_ = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED | WS_EX_TOPMOST,
+                                kInputClass, L"waybar-input", WS_POPUP, 0, 0, 1, 1,
+                                nullptr, nullptr, GetModuleHandleW(nullptr), nullptr);
+  if (input_hwnd_ == nullptr) {
+    spdlog::warn("[win32] failed to create input window: {}", last_error());
+    return;
+  }
+  // 统一 alpha=1：肉眼不可见，但参与命中测试（整条 bar 可点击）
+  SetLayeredWindowAttributes(input_hwnd_, 0, 1, LWA_ALPHA);
+  register_input(input_hwnd_, hwnd_);
+}
+
+void BarBackend::destroy_input_window() {
+  if (input_hwnd_ == nullptr) return;
+  unregister_input(input_hwnd_);
+  DestroyWindow(input_hwnd_);
+  input_hwnd_ = nullptr;
 }
 
 void BarBackend::set_monitor(const MonitorInfo& monitor) { monitor_ = monitor; }
@@ -109,6 +212,27 @@ void BarBackend::apply() {
   } else {
     unregister_appbar();
   }
+
+  sync_input_window();
+}
+
+void BarBackend::sync_input_window() {
+  ensure_input_window();
+  if (input_hwnd_ == nullptr) return;
+
+  HWND bar = hwnd_;
+  if (bar == nullptr) return;
+
+  if (!visible_) {
+    ShowWindow(input_hwnd_, SW_HIDE);
+    return;
+  }
+
+  // 必须位于 bar 之上：bar 是分层窗口，透明像素不参与命中测试，
+  // 输入层在其上方才能把整条 bar 的点击统一转发给 GTK。
+  SetWindowPos(input_hwnd_, HWND_TOPMOST, current_.x, current_.y, current_.width,
+               current_.height, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
+  ShowWindow(input_hwnd_, SW_SHOWNOACTIVATE);
 }
 
 void BarBackend::update_size_and_position() {
@@ -339,6 +463,28 @@ LRESULT CALLBACK BarBackend::window_proc(HWND hwnd, UINT message, WPARAM wparam,
 }
 
 LRESULT BarBackend::handle_message(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+  // GTK3 的 Win32 实现会在 WM_GETMINMAXINFO 中把窗口最小跟踪尺寸设为“装饰尺寸”
+  // （约 47px），即使 set_decorated(false)。这会让 height < 47 的配置被强行撑高。
+  // 这里直接放行任意尺寸，由 Bar 的布局与 CSS 决定实际高度。
+  // 状态栏不抢焦点：否则点击 bar 会让前台窗口变成 waybar，sway/window 之类模块
+  // 拿不到真正的活动窗口标题。
+  if (message == WM_MOUSEACTIVATE) {
+    return MA_NOACTIVATE;
+  }
+  if (message == WM_GETMINMAXINFO) {
+    auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
+    if (info != nullptr) {
+      info->ptMinTrackSize.x = 1;
+      info->ptMinTrackSize.y = 1;
+      info->ptMaxTrackSize.x = GetSystemMetrics(SM_CXVIRTUALSCREEN) > 0
+                                   ? GetSystemMetrics(SM_CXVIRTUALSCREEN) * 4
+                                   : 32767;
+      info->ptMaxTrackSize.y = GetSystemMetrics(SM_CYVIRTUALSCREEN) > 0
+                                   ? GetSystemMetrics(SM_CYVIRTUALSCREEN) * 4
+                                   : 32767;
+    }
+    return 0;
+  }
   auto call_original = [&]() -> LRESULT {
     if (original_proc_ != nullptr) {
       return CallWindowProcW(original_proc_, hwnd, message, wparam, lparam);

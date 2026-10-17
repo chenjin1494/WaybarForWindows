@@ -13,7 +13,7 @@ long IdleInhibitor::deactivationTime = 0;
 
 IdleInhibitor::IdleInhibitor(const std::string& id, const waybar::Bar& bar,
                              const Json::Value& config)
-    : ALabel(config, "idle_inhibitor", id, "{icon}", 1),
+    : ALabel(config, "idle_inhibitor", id, "{icon}", 1, false, true),
       bar_(bar),
       timeout(config_["timeout"].isDouble() ? config_["timeout"].asDouble() : 0.0),
       timeout_step(config_["timeout-step"].isDouble() ? config_["timeout-step"].asDouble() : 10.0),

@@ -276,7 +276,30 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, margins_.bottom);
 #endif
 
+#ifdef _WIN32
+  // GTK3 的 Win32 后端会把窗口最小高度钳制到“装饰尺寸”（约 47px），即使
+  // set_decorated(false)。对不可缩放窗口，GTK 会严格采用请求尺寸，因此这里
+  // 显式给出完整宽度 + 配置高度，保证 height/margins 与上游语义一致。
+  int default_width = width_;
+  if (default_width <= 1 && output != nullptr && output->monitor) {
+    Gdk::Rectangle geometry;
+    output->monitor->get_geometry(geometry);
+    default_width = geometry.get_width();
+  }
+  // 状态栏永远不接收键盘焦点：否则它会把前台窗口抢走，sway/window 等模块
+  // 拿不到真正的活动窗口，且用户正在输入的应用会失焦。
+  window.set_accept_focus(false);
+  window.set_focus_on_map(false);
+  if (height_ > 1 && default_width > 0) {
+    window.set_resizable(false);
+    window.set_size_request(default_width, height_);
+    window.set_default_size(default_width, height_);
+  } else {
+    window.set_size_request(width_, height_);
+  }
+#else
   window.set_size_request(width_, height_);
+#endif
 
   // Position needs to be set after calculating the height due to the
   // GTK layer shell anchors logic relying on the dimensions of the bar.
@@ -756,6 +779,20 @@ void waybar::Bar::getModules(const Factory& factory, const std::string& pos,
         }
 
         std::shared_ptr<AModule> module_sp(module);
+        // 调试用：输出每个模块在 bar 内的分配区域，便于定位点击/布局问题
+        {
+          Gtk::Widget& widget = *module;
+          Gtk::Window* root = &window;
+          widget.signal_size_allocate().connect([&widget, root, ref](Gdk::Rectangle& alloc) {
+            int abs_x = 0;
+            int abs_y = 0;
+            const bool absolute =
+                widget.translate_coordinates(*root, 0, 0, abs_x, abs_y);
+            spdlog::debug("[layout] {} rect={},{} {}x{} abs={},{} absolute={} visible={}", ref,
+                          alloc.get_x(), alloc.get_y(), alloc.get_width(), alloc.get_height(),
+                          abs_x, abs_y, absolute, widget.get_visible());
+          });
+        }
         modules_all_.emplace_back(module_sp);
         if (group != nullptr) {
           group->addWidget(module);
@@ -832,6 +869,7 @@ auto waybar::Bar::setupWidgets() -> void {
 }
 
 void waybar::Bar::onConfigure(GdkEventConfigure* ev) {
+
   /*
    * GTK wants new size for the window.
    * Actual resizing and management of the exclusve zone is handled within the gtk-layer-shell

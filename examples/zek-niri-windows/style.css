@@ -609,6 +609,6 @@ window#waybar.empty #window {
 #custom-left_div_11 { animation: none; background-color: #A180C8; color: #2E3942; }
 #custom-left_div_1  { animation: none; background-color: #2E3942; color: #75AAD7; }
 #custom-applauncher { background-color: #75AAD7; color: #FFFFFF; }
-#custom-right_div_1 { animation: none; background-color: #75AAD7; color: #2E3942; }
-#custom-right_div_11{ animation: none; background-color: #2E3942; color: #7B7ECD; }
+#custom-right_div_1 { animation: none; background-color: #2E3942; color: #7B7ECD; }
+#custom-right_div_11{ animation: none; background-color: #75AAD7; color: #2E3942; }
 window#waybar { background-color: transparent; }

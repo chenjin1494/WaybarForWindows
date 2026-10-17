@@ -1,0 +1,237 @@
+#include "modules/hyprland/language.hpp"
+
+#include <spdlog/spdlog.h>
+#include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbregistry.h>
+
+#include "util/sanitize_str.hpp"
+#include "util/string.hpp"
+
+namespace waybar::modules::hyprland {
+
+Language::Language(const std::string& id, const Bar& bar, const Json::Value& config)
+    : ALabel(config, "language", id, "{}", 0, true), bar_(bar), m_ipc(IPC::inst()) {
+  // get the active layout when open
+  initLanguage();
+
+  label_.hide();
+  update();
+
+  // register for hyprland ipc
+  m_ipc.registerForIPC("activelayout", this);
+}
+
+Language::~Language() {
+  m_ipc.unregisterForIPC(this);
+  // wait for possible event handler to finish
+  std::lock_guard<std::mutex> lg(mutex_);
+}
+
+auto Language::update() -> void {
+  std::lock_guard<std::mutex> lg(mutex_);
+
+  // Swap the layout CSS class here (main thread). onEvent() runs on the IPC
+  // thread and must never touch GTK -- that race corrupts the heap (#4665).
+  if (prev_short_name_ != layout_.short_name) {
+    if (!prev_short_name_.empty()) {
+      label_.get_style_context()->remove_class(prev_short_name_);
+    }
+    if (!layout_.short_name.empty()) {
+      label_.get_style_context()->add_class(layout_.short_name);
+    }
+    prev_short_name_ = layout_.short_name;
+  }
+
+  spdlog::debug("hyprland language update with full name {}", layout_.full_name);
+  spdlog::debug("hyprland language update with short name {}", layout_.short_name);
+  spdlog::debug("hyprland language update with short description {}", layout_.short_description);
+  spdlog::debug("hyprland language update with variant {}", layout_.variant);
+
+  std::string layoutName = std::string{};
+  if (config_.isMember("format-" + layout_.short_description + "-" + layout_.variant)) {
+    const auto propName = "format-" + layout_.short_description + "-" + layout_.variant;
+    layoutName =
+        trim(fmt::format(fmt::runtime(format_), config_[propName].asString(),
+                         fmt::arg("long", layout_.full_name), fmt::arg("short", layout_.short_name),
+                         fmt::arg("shortDescription", layout_.short_description),
+                         fmt::arg("variant", layout_.variant)));
+  } else if (config_.isMember("format-" + layout_.short_description)) {
+    const auto propName = "format-" + layout_.short_description;
+    layoutName =
+        trim(fmt::format(fmt::runtime(format_), config_[propName].asString(),
+                         fmt::arg("long", layout_.full_name), fmt::arg("short", layout_.short_name),
+                         fmt::arg("shortDescription", layout_.short_description),
+                         fmt::arg("variant", layout_.variant)));
+  } else {
+    layoutName = trim(fmt::format(fmt::runtime(format_), fmt::arg("long", layout_.full_name),
+                                  fmt::arg("short", layout_.short_name),
+                                  fmt::arg("shortDescription", layout_.short_description),
+                                  fmt::arg("variant", layout_.variant)));
+  }
+  spdlog::debug("hyprland language formatted layout name {}", layoutName);
+
+  std::string tooltipContent = std::string{};
+  bool tooltip_enabled = tooltipEnabled();
+  if (tooltip_enabled) {
+    // Default to "{long}" when no tooltip-format is provided, matching the man page
+    auto tooltip_format =
+        config_.isMember("tooltip-format") ? config_["tooltip-format"].asString() : "{long}";
+    if (config_.isMember("tooltip-format-" + layout_.short_description + "-" + layout_.variant)) {
+      const auto propName = "tooltip-format-" + layout_.short_description + "-" + layout_.variant;
+      tooltipContent = trim(fmt::format(fmt::runtime(tooltip_format), config_[propName].asString(),
+                                        fmt::arg("long", layout_.full_name),
+                                        fmt::arg("short", layout_.short_name),
+                                        fmt::arg("shortDescription", layout_.short_description),
+                                        fmt::arg("variant", layout_.variant)));
+    } else if (config_.isMember("tooltip-format-" + layout_.short_description)) {
+      const auto propName = "tooltip-format-" + layout_.short_description;
+      tooltipContent = trim(fmt::format(fmt::runtime(tooltip_format), config_[propName].asString(),
+                                        fmt::arg("long", layout_.full_name),
+                                        fmt::arg("short", layout_.short_name),
+                                        fmt::arg("shortDescription", layout_.short_description),
+                                        fmt::arg("variant", layout_.variant)));
+    } else {
+      tooltipContent =
+          trim(fmt::format(fmt::runtime(tooltip_format), fmt::arg("long", layout_.full_name),
+                           fmt::arg("short", layout_.short_name),
+                           fmt::arg("shortDescription", layout_.short_description),
+                           fmt::arg("variant", layout_.variant)));
+    }
+    spdlog::debug("hyprland language formatted tooltip content {}", tooltipContent);
+  }
+
+  if (!format_.empty()) {
+    label_.show();
+    setLabelMarkup(layoutName);
+    if (tooltip_enabled) {
+      setTooltipMarkup(tooltipContent);
+    }
+  } else {
+    label_.hide();
+  }
+
+  ALabel::update();
+}
+
+void Language::onEvent(const std::string& ev) {
+  std::lock_guard<std::mutex> lg(mutex_);
+  const auto payloadStart = ev.find(">>");
+  if (payloadStart == std::string::npos) {
+    spdlog::warn("hyprland language received malformed event: {}", ev);
+    return;
+  }
+  const auto payload = ev.substr(payloadStart + 2);
+  const auto kbSeparator = payload.find(',');
+  if (kbSeparator == std::string::npos) {
+    spdlog::warn("hyprland language received malformed event payload: {}", ev);
+    return;
+  }
+  // Both halves of "<keyboard>,<layout>" may contain commas of their own: the
+  // keyboard in its vendor string, the layout inside its variant parentheses, eg
+  // activelayout>>micro-star-int'l-co.,-ltd.-msi-gk50-elite-gaming-keyboard,English (US, intl.,
+  // with dead keys)
+  // The separator is therefore the last comma outside parentheses. Splitting on
+  // the last '(' instead would assume every bracket belongs to the layout, but
+  // keyboard names carry them too, eg "ite-tech.-inc.-ite-device(8910)-keyboard",
+  // which left no comma to find and dropped the event entirely (#4586).
+  const auto layoutSeparator = rfindOutsideParens(payload, ',');
+  if (layoutSeparator == std::string::npos) {
+    spdlog::warn("hyprland language received malformed layout payload: {}", ev);
+    return;
+  }
+  auto layoutName = payload.substr(layoutSeparator + 1);
+
+  if (config_.isMember("keyboard-name")) {
+    const auto keyboardName = config_["keyboard-name"].asString();
+    // The keyboard name itself can contain commas, so match it as a full prefix
+    // (followed by the ',' separator) rather than comparing against the substring
+    // before the first comma, which would truncate such names and drop the event.
+    if (payload.size() <= keyboardName.size() || payload[keyboardName.size()] != ',' ||
+        payload.compare(0, keyboardName.size(), keyboardName) != 0)
+      return;  // ignore
+  }
+
+  layoutName = waybar::util::sanitize_string(layoutName);
+
+  if (layoutName.empty()) {
+    // Virtual keyboards (e.g. wtype) can emit activelayout events without a layout name;
+    // ignore them instead of blanking the module (#2079).
+    return;
+  }
+
+  auto newLayout = getLayout(layoutName);
+  if (newLayout.full_name.empty()) {
+    // Layout name not found in the xkb registry, e.g. reported by a virtual keyboard that
+    // isn't a real physical layout. Keep showing the last known good layout (#2079).
+    spdlog::debug("hyprland language onevent: unknown layout '{}', ignoring", layoutName);
+    return;
+  }
+
+  // CSS class swap happens in update() on the main thread (#4665).
+  layout_ = newLayout;
+
+  spdlog::debug("hyprland language onevent with {}", layoutName);
+
+  dp.emit();
+}
+
+void Language::initLanguage() {
+  const auto inputDevices = m_ipc.getSocket1Reply("devices");
+
+  const auto kbName = config_["keyboard-name"].asString();
+
+  try {
+    auto searcher = kbName.empty()
+                        ? inputDevices
+                        : inputDevices.substr(inputDevices.find(std::format("\t{}\n", kbName)) +
+                                              kbName.length() + 2);
+    searcher = searcher.substr(searcher.find("keymap:") + 8);
+    searcher = searcher.substr(0, searcher.find_first_of("\n\t"));
+
+    searcher = waybar::util::sanitize_string(searcher);
+
+    layout_ = getLayout(searcher);
+
+    spdlog::debug("hyprland language initLanguage found {}", layout_.full_name);
+
+    dp.emit();
+  } catch (std::exception& e) {
+    spdlog::error("hyprland language initLanguage failed with {}", e.what());
+  }
+}
+
+auto Language::getLayout(const std::string& fullName) -> Layout {
+  auto* const context = rxkb_context_new(RXKB_CONTEXT_LOAD_EXOTIC_RULES);
+  rxkb_context_parse_default_ruleset(context);
+
+  rxkb_layout* layout = rxkb_layout_first(context);
+  while (layout != nullptr) {
+    std::string nameOfLayout = rxkb_layout_get_description(layout);
+
+    if (nameOfLayout != fullName) {
+      layout = rxkb_layout_next(layout);
+      continue;
+    }
+
+    auto name = std::string(rxkb_layout_get_name(layout));
+    const auto* variantPtr = rxkb_layout_get_variant(layout);
+    std::string variant = variantPtr == nullptr ? "" : std::string(variantPtr);
+
+    const auto* descriptionPtr = rxkb_layout_get_brief(layout);
+    std::string description = descriptionPtr == nullptr ? "" : std::string(descriptionPtr);
+
+    Layout info = Layout{nameOfLayout, name, variant, description};
+
+    rxkb_context_unref(context);
+
+    return info;
+  }
+
+  rxkb_context_unref(context);
+
+  spdlog::debug("hyprland language didn't find matching layout");
+
+  return Layout{"", "", "", ""};
+}
+
+}  // namespace waybar::modules::hyprland

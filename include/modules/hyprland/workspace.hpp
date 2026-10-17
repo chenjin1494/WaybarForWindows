@@ -1,0 +1,114 @@
+#pragma once
+
+#include <gtkmm/button.h>
+#include <gtkmm/label.h>
+#include <json/value.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
+#include <regex>
+#include <string>
+#include <variant>
+#include <vector>
+
+#include "AModule.hpp"
+#include "bar.hpp"
+#include "modules/hyprland/backend.hpp"
+#include "modules/hyprland/windowcreationpayload.hpp"
+#include "modules/hyprland/workspace_identity.hpp"
+#include "util/enum.hpp"
+#include "util/regex_collection.hpp"
+
+using WindowAddress = std::string;
+
+namespace waybar::modules::hyprland {
+
+class Workspaces;
+class Workspace {
+ public:
+  explicit Workspace(const Json::Value& workspace_data, Workspaces& workspace_manager,
+                     const Json::Value& clients_data = Json::Value::nullRef);
+  ~Workspace();
+  std::string& selectString(std::map<std::string, std::string>& string_map);
+  Gtk::Button& button() { return m_button; };
+
+  const WorkspaceIdentity& identity() const { return m_identity; };
+  const std::string& address() const { return m_identity.address; };
+  WorkspaceKind kind() const { return m_identity.kind; };
+  std::optional<int> number() const { return m_identity.number(); };
+  std::string name() const { return m_identity.name; };
+  std::string output() const { return m_output; };
+  bool isActive() const { return m_isActive; };
+  bool isSpecial() const { return m_identity.kind == WorkspaceKind::Special; };
+  bool isPersistent() const { return m_isPersistentRule || m_isPersistentConfig; };
+  bool isPersistentConfig() const { return m_isPersistentConfig; };
+  bool isPersistentRule() const { return m_isPersistentRule; };
+  bool isVisible() const { return m_isVisible; };
+  bool isUrgent() const { return m_isUrgent; };
+
+  bool handleClicked(GdkEventButton* bt) const;
+
+  bool handleEnter(GdkEventCrossing* event);
+  bool handleLeave(GdkEventCrossing* event);
+
+  void startHoverCheck();
+  void stopHoverCheck();
+  bool syncHoverClass();
+  bool pointerInsideButton();
+
+  void setActive(bool value = true) { m_isActive = value; };
+  void setPersistentRule(bool value = true) { m_isPersistentRule = value; };
+  void setPersistentConfig(bool value = true) { m_isPersistentConfig = value; };
+  void setUrgent(bool value = true) { m_isUrgent = value; };
+  void setVisible(bool value = true) { m_isVisible = value; };
+  void setWindows(uint value) { m_windows = value; };
+  void setAddress(std::string const& value);
+  void setIdentity(WorkspaceIdentity const& value) { m_identity = value; };
+  void setName(std::string const& value) { m_identity.name = value; };
+  void setOutput(std::string const& value) { m_output = value; };
+  bool containsWindow(WindowAddress const& addr) const {
+    return std::ranges::any_of(m_windowMap,
+                               [&addr](const auto& window) { return window.address == addr; });
+  };
+  void insertWindow(WindowCreationPayload create_window_payload);
+  void initializeWindowMap(const Json::Value& clients_data);
+  void setActiveWindow(WindowAddress const& addr);
+
+  bool onWindowOpened(WindowCreationPayload const& create_window_payload);
+  std::optional<WindowRepr> closeWindow(WindowAddress const& addr);
+
+  void update(const std::string& workspace_icon, const std::string& workspace_tooltip);
+
+ private:
+  Workspaces& m_workspaceManager;
+
+  WorkspaceIdentity m_identity;
+  std::string m_prevNameClass;
+  std::string m_output;
+  uint m_windows;
+  bool m_isActive = false;
+  bool m_isPersistentRule = false;    // represents the persistent state in hyprland
+  bool m_isPersistentConfig = false;  // represents the persistent state in the Waybar config
+  bool m_isUrgent = false;
+  bool m_isVisible = false;
+
+  sigc::connection m_hoverCheckConnection;
+
+  std::vector<WindowRepr> m_windowMap;
+
+  Gtk::Button m_button;
+  Gtk::Box m_content;
+  Gtk::Label m_labelBefore;
+  Gtk::Label m_labelAfter;
+
+  bool isEmpty() const;
+  void updateTaskbar(const std::string& workspace_icon);
+  bool handleClick(const GdkEventButton* event_button, WindowAddress const& addr) const;
+  bool shouldSkipWindow(const WindowRepr& window_repr) const;
+  IPC& m_ipc;
+};
+
+}  // namespace waybar::modules::hyprland

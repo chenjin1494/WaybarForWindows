@@ -1,0 +1,23 @@
+WaybarForWindows
+================
+Copyright (c) 2026 WaybarForWindows contributors
+
+本项目的绝大部分源代码来自 Waybar：
+
+    Waybar
+    Copyright (c) 2017-2026 Alexays and Waybar contributors
+    https://github.com/Alexays/Waybar
+    Licensed under the MIT License (见 LICENSE)
+
+基线提交：4e207a0cb51a9eb89b4245d90245721f5e39bf06 (v0.15.0)
+
+本仓库在其基础上新增 Windows 平台层（src/win32/、include/win32/、
+src/modules/win32/）、构建脚本、测试与文档，并在上游文件中加入
+`#ifdef _WIN32` 分支。原始 MIT 许可证与版权声明予以保留。
+
+第三方组件
+----------
+- Catch2（测试框架，vendored 单头文件）: BSL-1.0
+  Copyright (c) 2010-2024 Catch2 Authors
+- MSYS2 运行库与 GTK3/gtkmm3 等依赖在运行时随发行包分发时，遵循其各自许可证
+  （LGPL-2.1+/MIT/BSD 等），详见 package/THIRD-PARTY.md 与各组件 LICENSE。

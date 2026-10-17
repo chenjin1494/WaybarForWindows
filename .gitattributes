@@ -1,0 +1,18 @@
+# 源码与脚本统一使用 LF，避免 Windows 上 CRLF 引入的 diff 噪音，
+# 同时保证 bash 脚本在 MSYS2 / WSL 中可执行。
+* text=auto eol=lf
+
+*.sh      text eol=lf
+*.ps1     text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.scd     text eol=lf
+*.css     text eol=lf
+*.jsonc   text eol=lf
+*.json    text eol=lf
+
+*.png     binary
+*.ico     binary
+*.bmp     binary
+*.gz      binary
+*.zst     binary

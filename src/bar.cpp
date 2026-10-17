@@ -804,9 +804,14 @@ void waybar::Bar::getModules(const Factory& factory, const std::string& pos,
             int abs_y = 0;
             const bool absolute =
                 widget.translate_coordinates(*root, 0, 0, abs_x, abs_y);
-            spdlog::debug("[layout] {} rect={},{} {}x{} abs={},{} absolute={} visible={}", ref,
-                          alloc.get_x(), alloc.get_y(), alloc.get_width(), alloc.get_height(),
-                          abs_x, abs_y, absolute, widget.get_visible());
+            std::string classes;
+            for (const auto& cls : widget.get_style_context()->list_classes()) {
+              if (!classes.empty()) classes += ",";
+              classes += cls.raw();
+            }
+            spdlog::debug("[layout] {} rect={},{} {}x{} abs={},{} absolute={} visible={} name={} classes={}",
+                          ref, alloc.get_x(), alloc.get_y(), alloc.get_width(), alloc.get_height(),
+                          abs_x, abs_y, absolute, widget.get_visible(), widget.get_name().raw(), classes);
           });
         }
         modules_all_.emplace_back(module_sp);

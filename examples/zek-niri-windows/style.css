@@ -55,10 +55,10 @@ tooltip label {
     color:@tertiary;
 }
 
-#custom-right_div.5 {
+#custom-right_div_5 {
     background: @surface_container_high;
     color: @surface;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -106,9 +106,9 @@ window#waybar.empty #window {
     background-color: @surface_container_high;
 }
 
-#custom-right_div.6 {
+#custom-right_div_6 {
     color: @surface_container_high;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 /* —————————————————————————————————————————————————————————————————————————— */
@@ -119,11 +119,11 @@ window#waybar.empty #window {
 
 /* 中间 */
 
-#custom-left_div.3 {
+#custom-left_div_3 {
     color: @surface_container_high;
     /* 调节这里的padding可以移动中心的模块位置 */
     padding: 0px 0em 0em 0.1em;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 
@@ -167,11 +167,11 @@ window#waybar.empty #window {
     color: @secondary;
 }
 
-#custom-left_div.2 {
+#custom-left_div_2 {
     background-color: @surface_container_high;
     color: @tertiary;
     padding: 0px 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 #power-profiles-daemon,
@@ -202,36 +202,36 @@ window#waybar.empty #window {
 }
 
 /* 菜单 */
-#custom-left_div.11 {
+#custom-left_div_11 {
     background-color: @tertiary;
     color: @surface_container
 }
 #custom-applauncher {
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px 0.39em; /* 7px */
     margin: 0px;
     background-color: @primary;
     color: @on_primary;
 
 }
-#custom-right_div.1,
-#custom-left_div.1 {
+#custom-right_div_1,
+#custom-left_div_1 {
     background-color: @surface_container;
     color: @primary;
 }
-#custom-left_div.1,
-#custom-right_div.1 {
+#custom-left_div_1,
+#custom-right_div_1 {
     padding: 0px;
     margin: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
-#custom-left_div.11,
-#custom-right_div.11 {
+#custom-left_div_11,
+#custom-right_div_11 {
     margin: 0px;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
-#custom-right_div.11 {
+#custom-right_div_11 {
 
     background-color: @secondary;
     color: @surface_container;
@@ -248,11 +248,11 @@ window#waybar.empty #window {
     color: @on_secondary;
 }
 
-#custom-right_div.2 {
+#custom-right_div_2 {
     background-color: @surface_container_high;
     color: @secondary;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 #custom-cava {
@@ -267,18 +267,18 @@ window#waybar.empty #window {
     padding: 0px 0.39em 0px 0px; /* 7px 0 0 */
 }
 
-#custom-right_div.3 {
+#custom-right_div_3 {
 
     color: @surface_container_high;
     /* 调节这里的padding可以移动中心的模块位置 */
     padding: 0px 0em 0px 0px ;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
-#custom-right_div.4 {
+#custom-right_div_4 {
     /* background-color: @surface_container_high; */
     color: @on_secondary;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 /* —————————————————————————————————————————————————————————————————————————— */
 /* —————————————————————————————————————————————————————————————————————————— */
@@ -289,10 +289,10 @@ window#waybar.empty #window {
 /* 右侧 */
 
 
-#custom-left_div.7 {
+#custom-left_div_7 {
     /* background-color: @surface_container_high; */
     color: @surface_bright;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -304,11 +304,11 @@ window#waybar.empty #window {
 }
 
 
-#custom-left_div.4 {
+#custom-left_div_4 {
     background-color: @surface_bright;
     color: @surface_container_high;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 /* 亮度 */
 #custom-ddcutil-day,
@@ -402,10 +402,10 @@ window#waybar.empty #window {
     background-color: @tertiary;
 }
 
-#custom-left_div.8 {
+#custom-left_div_8 {
     background-color: @surface_container_high;
     color: @surface_container;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -450,17 +450,17 @@ window#waybar.empty #window {
 
 
 /* powermenu电源菜单 */
-#custom-left_div.5 {
+#custom-left_div_5 {
     background-color: @surface_container;
     color: @surface;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 #custom-wlogout {
     background-color: @surface;
     color: @error;
     padding: 0px 0.56em; /* 10px */
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 
@@ -488,11 +488,11 @@ window#waybar.empty #window {
     padding: 0px 0.83em; /* 15px */
 }
 
-#custom-left_div.6 {
+#custom-left_div_6 {
     background-color: @surface;
     color: @surface_container_high;
     padding: 0px;
-    font-size: 1.39em; /* 25px */
+    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 /* ============================================================
@@ -522,26 +522,26 @@ window#waybar.empty #window {
 /* 中心锚点：Arch 标志保持原位，不做任何动画 */
 
 /* Arch 左侧栏：由内向外依次淡入 */
-#custom-left_div.1     { animation: nc-fade 0.45s linear 0.05s both; }
-#custom-left_div.11    { animation: nc-fade 0.45s linear 0.10s both; }
+#custom-left_div_1     { animation: nc-fade 0.45s linear 0.05s both; }
+#custom-left_div_11    { animation: nc-fade 0.45s linear 0.10s both; }
 #power-profiles-daemon { animation: nc-fade 0.45s linear 0.15s both; }
 #clock.date            { animation: nc-fade 0.45s linear 0.20s both; }
 #idle_inhibitor        { animation: nc-fade 0.45s linear 0.25s both; }
-#custom-left_div.2     { animation: nc-fade 0.45s linear 0.30s both; }
+#custom-left_div_2     { animation: nc-fade 0.45s linear 0.30s both; }
 #custom-clipboard      { animation: nc-fade 0.45s linear 0.35s both; }
 #custom-screenshot     { animation: nc-fade 0.45s linear 0.40s both; }
 #custom-wallpapers     { animation: nc-fade 0.45s linear 0.45s both; }
 #custom-actions        { animation: nc-fade 0.45s linear 0.50s both; }
 #custom-colors-theme   { animation: nc-fade 0.45s linear 0.52s both; }
-#custom-left_div.3     { animation: nc-fade 0.45s linear 0.55s both; }
+#custom-left_div_3     { animation: nc-fade 0.45s linear 0.55s both; }
 
 /* Arch 右侧栏：由内向外依次淡入 */
-#custom-right_div.1    { animation: nc-fade 0.45s linear 0.05s both; }
-#custom-right_div.11   { animation: nc-fade 0.45s linear 0.10s both; }
+#custom-right_div_1    { animation: nc-fade 0.45s linear 0.05s both; }
+#custom-right_div_11   { animation: nc-fade 0.45s linear 0.10s both; }
 #clock:not(.date)      { animation: nc-fade 0.45s linear 0.15s both; }
-#custom-right_div.2    { animation: nc-fade 0.45s linear 0.20s both; }
+#custom-right_div_2    { animation: nc-fade 0.45s linear 0.20s both; }
 #custom-cava           { animation: nc-fade 0.45s linear 0.25s both; }
-#custom-right_div.3    { animation: nc-fade 0.45s linear 0.30s both; }
+#custom-right_div_3    { animation: nc-fade 0.45s linear 0.30s both; }
 
 /* ============================================================
    外栏：左右两栏分别从各自屏幕边缘向内展开
@@ -551,16 +551,16 @@ window#waybar.empty #window {
    ============================================================ */
 
 /* 左上角（modules-left）：从左边缘向内展开 */
-#custom-right_div.6    { animation: nc-in-left 0.5s linear 0.55s both; }
+#custom-right_div_6    { animation: nc-in-left 0.5s linear 0.55s both; }
 #window                { animation: nc-in-left 0.5s linear 0.60s both; }
-#custom-right_div.5    { animation: nc-in-left 0.5s linear 0.65s both; }
+#custom-right_div_5    { animation: nc-in-left 0.5s linear 0.65s both; }
 #workspaces            { animation: nc-in-left 0.5s linear 0.70s both; }
 #workspaces button     { animation: nc-in-left 0.5s linear 0.70s both; }
 
 /* 右上角（modules-right）：从右边缘向内展开 */
-#custom-left_div.7     { animation: nc-in-right 0.5s linear 0.35s both; }
+#custom-left_div_7     { animation: nc-in-right 0.5s linear 0.35s both; }
 #tray                  { animation: nc-in-right 0.5s linear 0.43s both; }
-#custom-left_div.4     { animation: nc-in-right 0.5s linear 0.47s both; }
+#custom-left_div_4     { animation: nc-in-right 0.5s linear 0.47s both; }
 
 /* 亮度分组 #group/ddcutil 的子模块统一展开 */
 #custom-ddcutil-day,
@@ -576,11 +576,11 @@ window#waybar.empty #window {
 #pulseaudio,
 #pulseaudio-slider     { animation: nc-in-right 0.5s linear 0.59s both; }
 
-#custom-left_div.8     { animation: nc-in-right 0.5s linear 0.63s both; }
+#custom-left_div_8     { animation: nc-in-right 0.5s linear 0.63s both; }
 #bluetooth             { animation: nc-in-right 0.5s linear 0.67s both; }
 #network               { animation: nc-in-right 0.5s linear 0.71s both; }
 #battery               { animation: nc-in-right 0.5s linear 0.75s both; }
-#custom-left_div.5     { animation: nc-in-right 0.5s linear 0.79s both; }
+#custom-left_div_5     { animation: nc-in-right 0.5s linear 0.79s both; }
 #custom-swaync         { animation: nc-in-right 0.5s linear 0.83s both; }
 
 /* 电源分组 #group/powermenu 的子模块统一展开 */

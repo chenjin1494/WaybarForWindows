@@ -224,3 +224,16 @@ baseline:            bars=visible, point(10,10)=WaybarInput
 配色：新增 `colors-windows.css`，按参考截图取样（深色底 `#1a1f23`、紫色 `#a180c8`、蓝紫 `#7b7ecd`、天蓝 `#7ac1fc`）。
 
 字体：`FiraCode Nerd Font` 优先。
+### 分隔符（尖角）为什么之前只在中间
+
+GTK CSS 无法匹配以数字开头的 class 选择器：主题里的 `#custom-right_div.5` 这类规则在
+Windows/GTK 上被忽略，于是分隔符既没有背景色，也没拿到 `font-size: 1.39em`，箭头三角
+只有默认字体那么高（约 16px），在 34px 高的 bar 里就表现为“尖角缩在中间”。
+
+修复：
+
+1. 把分隔符模块从 `custom/right_div#5` 改名为 `custom/right_div_5`（`left_div`、`inv` 同理），
+   CSS 选择器同步改为 `#custom_right_div_5` → `#custom-right_div_5`，规则终于生效；
+2. bar 高度从 34px 降到 24px（`"height": 20` + workspaces 按钮 4px），箭头三角的斜边
+   正好从 bar 最上面延伸到最下面，与参考图一致；
+3. 右侧亮度/音量分组改为直接模块（`backlight` / `pulseaudio`），避免抽屉滑块把 bar 撑高到 34px。

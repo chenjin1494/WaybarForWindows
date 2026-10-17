@@ -603,13 +603,12 @@ window#waybar.empty #window {
     background-color: #2E3942;
     color: #75AAD7;
 }
-/* logo-colors：这四个分隔符带 nc-fade 动画，GTK 对无窗口的 DrawingArea
-   应用 opacity 后整块变透明，所以这里关闭动画，颜色才可见 */
-#custom-left_div_1,
-#custom-right_div_1,
-#custom-left_div_11,
-#custom-right_div_11 {
-    animation: none;
-    background-color: #2E3942;
-    color: #75AAD7;
-}
+/* 徽标区配色（按用户指定：背景/前景）
+   A=left_div_11  B=left_div_1  C=applauncher  D=right_div_1  E=right_div_11
+   这四块带 nc-fade 动画，GTK 对无窗口 DrawingArea 应用 opacity 会整块透明，必须 animation: none */
+#custom-left_div_11 { animation: none; background-color: #A180C8; color: #2E3942; }
+#custom-left_div_1  { animation: none; background-color: #2E3942; color: #75AAD7; }
+#custom-applauncher { background-color: #75AAD7; color: #FFFFFF; }
+#custom-right_div_1 { animation: none; background-color: #75AAD7; color: #2E3942; }
+#custom-right_div_11{ animation: none; background-color: #2E3942; color: #7B7ECD; }
+window#waybar { background-color: transparent; }

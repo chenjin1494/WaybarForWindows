@@ -234,31 +234,26 @@ auto Network::update() -> void {
   refreshAdapter(state_);
   updateBandwidth(state_);
 
-  if (!state_.connected) {
-    if (!format_disconnected_.empty()) {
-      event_box_.show();
-      label_.set_markup(format_disconnected_);
-      if (tooltipEnabled()) {
-        setTooltipMarkup("disconnected");
-      }
-    } else {
-      event_box_.hide();
-    }
-    ALabel::update();
-    return;
-  }
-
   std::string format;
   std::string tooltip_format = "";
   std::string state_name;
+  std::string icon;
 
-  if (state_.wireless && !state_.essid.empty()) {
+  if (!state_.connected) {
+    state_name = "disconnected";
+    format = format_disconnected_;
+    tooltip_format = config_["tooltip-format-disconnected"].isString()
+                         ? config_["tooltip-format-disconnected"].asString()
+                         : "disconnected";
+    icon = getIcon(0, std::vector<std::string>{"disconnected"});
+  } else if (state_.wireless && !state_.essid.empty()) {
     format = alt_format_ && config_["format-alt"].isString() ? config_["format-alt"].asString()
                                                             : format_wifi_;
     tooltip_format = config_["tooltip-format-wifi"].isString()
                          ? config_["tooltip-format-wifi"].asString()
                          : "{essid} ({signalStrength}%)";
     state_name = "wifi";
+    icon = getIcon(state_.signal_strength, std::vector<std::string>{"wifi"});
   } else if (!state_.ipaddr.empty()) {
     format = alt_format_ && config_["format-alt"].isString() ? config_["format-alt"].asString()
                                                             : format_ethernet_;
@@ -266,12 +261,14 @@ auto Network::update() -> void {
                          ? config_["tooltip-format-ethernet"].asString()
                          : "{ipaddr}/{cidr}";
     state_name = "ethernet";
+    icon = getIcon(0, std::vector<std::string>{"ethernet"});
   } else {
     format = format_linked_;
     tooltip_format = config_["tooltip-format-linked"].isString()
                          ? config_["tooltip-format-linked"].asString()
                          : "{ifname} (No IP)";
     state_name = "linked";
+    icon = getIcon(0, std::vector<std::string>{"linked"});
   }
 
   if (config_["tooltip-format"].isString()) {
@@ -295,6 +292,7 @@ auto Network::update() -> void {
     store.push_back(fmt::arg("bandwidthUpBits", formatBandwidth(state_.bandwidth_up * 8)));
     store.push_back(fmt::arg("bandwidthDownBytes", formatBandwidth(state_.bandwidth_down)));
     store.push_back(fmt::arg("bandwidthUpBytes", formatBandwidth(state_.bandwidth_up)));
+    store.push_back(fmt::arg("icon", icon));
     return fmt::vformat(pattern, store);
   };
 

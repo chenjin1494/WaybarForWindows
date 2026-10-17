@@ -17,15 +17,20 @@ namespace waybar::modules {
 
 namespace {
 
+std::mutex g_com_mutex;
+
 // Core Audio 的 COM 对象按“每次读取”创建/释放，避免跨线程持有；
 // interval 默认 5s，开销可以忽略。
 struct AudioState {
   bool available = false;
   bool muted = false;
   double volume = 0.0;  // 0.0 - 1.0
-};
 
-std::mutex g_com_mutex;
+  // 采集端点（麦克风），用于上游的 {format_source} 占位符
+  bool source_available = false;
+  bool source_muted = false;
+  double source_volume = 0.0;
+};
 
 AudioState read_audio_state() {
   AudioState state;
@@ -44,25 +49,32 @@ AudioState read_audio_state() {
     return state;
   }
 
-  IMMDevice* device = nullptr;
-  if (SUCCEEDED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device)) &&
-      device != nullptr) {
+  const auto read_endpoint = [enumerator](EDataFlow flow, bool& available, bool& muted,
+                                          double& volume) {
+    IMMDevice* device = nullptr;
+    if (FAILED(enumerator->GetDefaultAudioEndpoint(flow, eConsole, &device)) ||
+        device == nullptr) {
+      return;
+    }
     IAudioEndpointVolume* endpoint = nullptr;
     if (SUCCEEDED(device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, nullptr,
                                    reinterpret_cast<void**>(&endpoint))) &&
         endpoint != nullptr) {
-      float volume = 0.0F;
+      float level = 0.0F;
       BOOL mute = FALSE;
-      if (SUCCEEDED(endpoint->GetMasterVolumeLevelScalar(&volume)) &&
+      if (SUCCEEDED(endpoint->GetMasterVolumeLevelScalar(&level)) &&
           SUCCEEDED(endpoint->GetMute(&mute))) {
-        state.available = true;
-        state.volume = std::clamp(static_cast<double>(volume), 0.0, 1.0);
-        state.muted = mute != FALSE;
+        available = true;
+        volume = std::clamp(static_cast<double>(level), 0.0, 1.0);
+        muted = mute != FALSE;
       }
       endpoint->Release();
     }
     device->Release();
-  }
+  };
+
+  read_endpoint(eRender, state.available, state.muted, state.volume);
+  read_endpoint(eCapture, state.source_available, state.source_muted, state.source_volume);
 
   enumerator->Release();
   if (SUCCEEDED(init)) CoUninitialize();
@@ -166,16 +178,41 @@ auto Pulseaudio::update() -> void {
   }
 
   event_box_.show();
-  const auto icons = std::vector<std::string>{state.muted ? "muted" : state_name};
+
+  // 上游 {format_source}：采集端点的音量/静音模板
+  const int source_volume = static_cast<int>(std::lround(state.source_volume * 100.0));
+  const std::string source_template =
+      state.source_muted
+          ? (config_["format-source-muted"].isString() ? config_["format-source-muted"].asString()
+                                                       : std::string("muted"))
+          : (config_["format-source"].isString() ? config_["format-source"].asString()
+                                                 : std::string("{volume}%"));
+  std::string format_source;
+  if (state.source_available) {
+    try {
+      format_source = fmt::format(fmt::runtime(source_template),
+                                  fmt::arg("volume", source_volume));
+    } catch (const fmt::format_error& e) {
+      spdlog::warn("pulseaudio: invalid format-source '{}': {}", source_template, e.what());
+    }
+  }
+
+  const auto icon_alts = state.muted
+                             ? std::vector<std::string>{"muted", "speaker", "default"}
+                             : std::vector<std::string>{"speaker", "headphone", "headset",
+                                                        "bluetooth", "default"};
+  const std::string icon = getIcon(state.muted ? 0 : static_cast<uint16_t>(volume), icon_alts);
+
   setLabelMarkup(fmt::format(fmt::runtime(format), fmt::arg("volume", volume),
-                             fmt::arg("icon", getIcon(state.muted ? 0 : volume, icons))));
+                             fmt::arg("icon", icon), fmt::arg("format_source", format_source)));
 
   if (tooltipEnabled()) {
     auto tooltip_format = config_["tooltip-format"].isString()
                               ? config_["tooltip-format"].asString()
                               : std::string("{volume}%");
     setTooltipMarkup(fmt::format(fmt::runtime(tooltip_format), fmt::arg("volume", volume),
-                                 fmt::arg("icon", getIcon(state.muted ? 0 : volume, icons))));
+                                 fmt::arg("icon", icon),
+                                 fmt::arg("format_source", format_source)));
   }
 
   label_.get_style_context()->remove_class("muted");

@@ -237,3 +237,21 @@ Windows/GTK 上被忽略，于是分隔符既没有背景色，也没拿到 `fon
 2. bar 高度从 34px 降到 24px（`"height": 20` + workspaces 按钮 4px），箭头三角的斜边
    正好从 bar 最上面延伸到最下面，与参考图一致；
 3. 右侧亮度/音量分组改为直接模块（`backlight` / `pulseaudio`），避免抽屉滑块把 bar 撑高到 34px。
+### 分隔符改为原生 Cairo 三角形（精确几何）
+
+字体里的 powerline 字形（U+E0B0/E0B2）竖边只有约半个字高，且字形自带上下水平边，
+在 24px 高的 bar 里仍然不是“底边铺满上下”的三角形。参考图要求的几何是：
+
+- 三角形顶点在分隔符右缘 `x=0`，上下顶点 `(0,±1)`，左尖点 `(-√3,0)`；
+- 底边（竖边）覆盖 bar 的整个高度，斜率 `±1/√3`，宽高比 `√3/2 ≈ 0.866`。
+
+因此新增原生 `Divider` 模块（`src/modules/windows/divider.cpp`）：
+
+- 用 Cairo `move_to/line_to/fill` 直接画等腰三角形，**底边向上下各延伸 2px**，
+  抗锯齿后仍从 bar 顶边铺到底边；
+- 背景色/三角形颜色仍由主题 CSS 的 `#custom-right_div_5 { background-color; color; }` 提供
+  （GTK StyleContext 读取），因此每个分隔符的颜色保持原主题设定；
+- 宽度固定 21px（24 × √3/2 ≈ 20.8），不再依赖字体字形高度；
+- 工厂里拦截 `custom/left_div*`、`custom/right_div*`、`*_inv*`，其余 custom 模块不受影响。
+
+实测（PrintWindow 抓取 1920×24）：三角形竖边在 y=0..23 全部着色，向右逐渐收窄到尖点。

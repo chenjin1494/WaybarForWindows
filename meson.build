@@ -342,6 +342,7 @@ if is_windows
         'src/modules/windows/bluetooth.cpp',
         'src/modules/windows/tray.cpp',
         'src/modules/windows/cava.cpp',
+        'src/modules/windows/divider.cpp',
         'src/modules/cffi.cpp',
         'src/win32/wmi.cpp',
         'src/win32/fullscreen.cpp',

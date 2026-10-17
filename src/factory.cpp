@@ -88,6 +88,7 @@
 #ifdef _WIN32
 #include "modules/windows/network.hpp"
 #include "modules/windows/workspaces.hpp"
+#include "modules/windows/divider.hpp"
 #include "modules/windows/bluetooth.hpp"
 #include "modules/windows/tray.hpp"
 #include "modules/windows/cava.hpp"
@@ -369,6 +370,15 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "custom/cava") {
       return new waybar::modules::Cava(id, config_[name]);
     }
+    if (ref.rfind("custom/left_div", 0) == 0 || ref.rfind("custom/right_div", 0) == 0 ||
+        ref.rfind("custom/left_inv", 0) == 0 || ref.rfind("custom/right_inv", 0) == 0) {
+      std::string widget_name = "custom-" + ref.substr(7);
+      if (!id.empty()) {
+        widget_name += "_" + id;
+      }
+      const bool point_left = ref.find("left") != std::string::npos;
+      return new waybar::modules::Divider(id, widget_name, point_left, config_[name]);
+    }
 #endif
 #ifdef HAVE_LIBUDEV
     if (ref == "backlight") {
@@ -398,6 +408,15 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     }
     if (ref == "custom/cava") {
       return new waybar::modules::Cava(id, config_[name]);
+    }
+    if (ref.rfind("custom/left_div", 0) == 0 || ref.rfind("custom/right_div", 0) == 0 ||
+        ref.rfind("custom/left_inv", 0) == 0 || ref.rfind("custom/right_inv", 0) == 0) {
+      std::string widget_name = "custom-" + ref.substr(7);
+      if (!id.empty()) {
+        widget_name += "_" + id;
+      }
+      const bool point_left = ref.find("left") != std::string::npos;
+      return new waybar::modules::Divider(id, widget_name, point_left, config_[name]);
     }
     if (ref == "pulseaudio/slider") {
       return new waybar::modules::PulseaudioSlider(id, config_[name]);

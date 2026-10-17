@@ -263,3 +263,9 @@ Windows/GTK 上被忽略，于是分隔符既没有背景色，也没拿到 `fon
 - 背景色与两侧引导三角形统一为 `#75AAD7`（CSS：`#custom-applauncher { background-color }`、
   `#custom-left_div_1, #custom-right_div_1, #custom-left_div_11, #custom-right_div_11 { color }`）；
 - 左键发送 Win 键打开开始菜单，右键打开 Windows 设置。
+### 菱形（六边形）由徽标模块绘制
+
+上一版徽标底色是矩形，两侧分隔符只把“三角形”染成 #75AAD7，两者之间留下深色楔形，
+看上去像几块拼不齐的蓝色。现改为：徽标模块自己绘制一个六边形（左右各一个 11px 箭头
++ 中间矩形），填充 #75AAD7，并在中间画 2×2 白色方块；配置中移除徽标两侧的
+`custom/left_div_1/11`、`custom/right_div_1/11`，不再需要外部三角形拼接。

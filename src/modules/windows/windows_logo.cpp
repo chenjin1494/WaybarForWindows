@@ -18,7 +18,7 @@ WindowsLogo::WindowsLogo(const std::string& id, const std::string& widget_name,
   context->add_class(id);
   context->add_class("module");
   context->add_class("applauncher");
-  area_.set_size_request(22, -1);
+  area_.set_size_request(46, -1); // 中间 + 两侧箭头，整体形成菱形
   area_.show();
   event_box_.add(area_);
   area_.signal_draw().connect(sigc::mem_fun(*this, &WindowsLogo::on_draw));
@@ -33,13 +33,27 @@ bool WindowsLogo::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   Gdk::RGBA foreground = context->get_color();
 
   cr->save();
+  // 六边形：左右各一个箭头 + 中间矩形，整体是参考图的“菱形徽标”
+  const double wing = std::min(11.0, static_cast<double>(width) / 4.0);
+  const double h = static_cast<double>(height);
+  const double w = static_cast<double>(width);
   cr->set_source_rgba(background.get_red(), background.get_green(), background.get_blue(),
                       background.get_alpha());
-  cr->rectangle(0, 0, width, height);
+  cr->move_to(0, h / 2.0);
+  cr->line_to(wing, 0);
+  cr->line_to(w - wing, 0);
+  cr->line_to(w, h / 2.0);
+  cr->line_to(w - wing, h);
+  cr->line_to(wing, h);
+  cr->close_path();
+  cr->fill();
+
+  // 用底色把中间矩形填实，避免两侧箭头与中间之间出现缝隙
+  cr->rectangle(wing, 0, w - wing * 2, h);
   cr->fill();
 
   // Windows 11 logo：2x2 四格，留出十字间隙
-  const double side = std::min(width, height) * 0.62;
+  const double side = std::min(static_cast<double>(width) - wing * 2.0, static_cast<double>(height)) * 0.62;
   const double gap = side * 0.12;
   const double cell = (side - gap) / 2.0;
   const double origin_x = (width - side) / 2.0;

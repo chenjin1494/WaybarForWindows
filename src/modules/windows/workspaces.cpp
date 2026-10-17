@@ -38,6 +38,9 @@ Workspaces::Workspaces(const std::string& id, const Json::Value& config)
   count_ = config_["count"].isInt()
                ? std::clamp(config_["count"].asInt(), 1, 9)
                : 2;
+  if (config_["send-keys"].isBool()) {
+    send_keys_ = config_["send-keys"].asBool();
+  }
   event_box_.set_name("workspaces");
   event_box_.add(box_);
   box_.set_name("workspaces");
@@ -85,8 +88,10 @@ void Workspaces::rebuild() {
 void Workspaces::switchBy(int delta) {
   const int steps = std::min(std::abs(delta), 8);
   const int direction = delta > 0 ? 1 : -1;
-  for (int i = 0; i < steps; ++i) {
-    sendWorkspaceSwitch(direction);
+  if (send_keys_) {
+    for (int i = 0; i < steps; ++i) {
+      sendWorkspaceSwitch(direction);
+    }
   }
   setActive(std::clamp(active_ + delta, 0, count_ - 1));
 }

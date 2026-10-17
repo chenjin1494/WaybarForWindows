@@ -23,3 +23,7 @@
 
 @define-color error #f2555a;
 @define-color on_error #2a0e0f;
+/* Windows 徽标区与 cava（可按配色调整） */
+@define-color logo_background #75aad7;
+@define-color logo_foreground #ffffff;
+@define-color cava_color #7ac1fc;

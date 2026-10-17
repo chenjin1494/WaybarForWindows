@@ -585,31 +585,22 @@ window#waybar.empty #window {
 
 /* 电源分组 #group/powermenu 的子模块统一展开 */
 #custom-wlogout        { animation: nc-in-right 0.5s linear 0.87s both; }
-
-/* cava 高度：方块字符会抬高行高，这里限制字号 */
+/* cava 高度：方块字符会抬高行高，这里限制字号；颜色跟随 palette */
 #custom-cava {
     font-size: 11px;
+    color: @cava_color;
 }
-/* Windows: 中央 Windows 11 徽标
-   过渡三角形底色 #2E3942，三角形与徽标底色 #75AAD7 */
-#custom-applauncher {
-    background-color: #75AAD7;
-    color: #f4f7fb;
-}
-#custom-left_div_1,
-#custom-right_div_1,
-#custom-left_div_11,
-#custom-right_div_11 {
-    background-color: #2E3942;
-    color: #75AAD7;
-}
-/* 徽标区配色（按用户指定：背景/前景）
+
+/* 徽标区：全部使用 palette 变量，紫/暖两套配色自动适配
    A=left_div_11  B=left_div_1  C=applauncher  D=right_div_1  E=right_div_11
    这四块带 nc-fade 动画，GTK 对无窗口 DrawingArea 应用 opacity 会整块透明，必须 animation: none */
-#custom-left_div_11 { animation: none; background-color: #A180C8; color: #2E3942; }
-#custom-left_div_1  { animation: none; background-color: #2E3942; color: #75AAD7; }
-#custom-applauncher { background-color: #75AAD7; color: #FFFFFF; }
-#custom-right_div_1 { animation: none; background-color: #2E3942; color: #75AAD7; }
-#custom-right_div_11{ animation: none; background-color: #7B7ECD; color: #2E3942; }
+#custom-applauncher {
+    background-color: @logo_background;
+    color: @logo_foreground;
+}
+#custom-left_div_11 { animation: none; background-color: @tertiary; color: @surface_container_high; }
+#custom-left_div_1  { animation: none; background-color: @surface_container_high; color: @logo_background; }
+#custom-right_div_1 { animation: none; background-color: @surface_container_high; color: @logo_background; }
+#custom-right_div_11{ animation: none; background-color: @secondary; color: @surface_container_high; }
 #custom-right_div_3 { animation: none; }
 window#waybar { background-color: transparent; }

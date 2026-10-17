@@ -163,3 +163,7 @@
 
     /* 时钟 #clock（自定义：淡红色背景） */
     @define-color clock_background #ff9e9e;
+/* 徽标区与 cava：沿用原版暖色（primary / on_primary） */
+@define-color logo_background #f67d04;
+@define-color logo_foreground #251f18;
+@define-color cava_color #f67d04;

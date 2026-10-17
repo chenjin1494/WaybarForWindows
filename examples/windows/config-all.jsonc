@@ -10,10 +10,11 @@
 
     "modules-left": [
         "custom/hello",
-        "sway/window"
+        "sway/window",
+        "wlr/taskbar"
     ],
     "modules-center": [
-        "wlr/taskbar"
+        "clock"
     ],
     "modules-right": [
         "cpu",
@@ -29,8 +30,7 @@
         "upower",
         "idle_inhibitor",
         "keyboard-state",
-        "sway/language",
-        "clock"
+        "sway/language"
     ],
 
     // ------------------------------------------------ 左侧
@@ -50,7 +50,7 @@
     // ------------------------------------------------ 中间
     "wlr/taskbar": {
         "format": "{title}",
-        "max-length": 16,
+        "max-length": 12,
         "tooltip-format": "{title}\n{app_id}",
         "interval": 1
     },

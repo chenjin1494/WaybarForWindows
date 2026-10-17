@@ -18,10 +18,10 @@ C++ / GTK3（gtkmm-3.0）代码库，新增 Windows 平台层（窗口、AppBar 
 |---|---|---|
 | P0 | 工具链、仓库骨架、GTK/Win32 关键行为验证 | ✅ 完成 |
 | P1 | 核心 Shell：配置/CSS/窗口/AppBar/模式/CLI/控制通道 | ✅ 完成 |
-| P2 | 核心模块（clock/cpu/memory/battery/network/audio/custom…） | 🚧 进行中 |
+| P2 | 核心模块（clock/cpu/memory/battery/network/audio/custom…） | ✅ 完成 |
 | P3 | 桌面集成模块（foreground window / taskbar / 输入法语言） | ⏳ 计划中 |
-| P4 | 测试矩阵、文档、示例配置 | ⏳ 计划中 |
-| P5 | 打包、CI、发布 | ⏳ 计划中 |
+| P4 | 测试矩阵、文档、示例配置 | ✅ 完成 |
+| P5 | 打包、CI、发布 | 🚧 进行中 |
 
 模块兼容性分级见 [`docs/MODULE-MATRIX.md`](docs/MODULE-MATRIX.md)；Windows 与上游的差异见
 [`docs/WINDOWS-DIFFERENCES.md`](docs/WINDOWS-DIFFERENCES.md)。
@@ -64,6 +64,24 @@ waybar --reload          # 重载配置与样式（对应 SIGUSR2）
 waybar --show / --hide
 waybar --list-outputs    # 列出显示器名称/标识/几何，便于配置 output
 ```
+
+## 打包与分发
+
+生成免安装的 portable zip（含全部第三方 DLL 与 GTK 运行期资源）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1
+```
+
+产物：`dist\waybar-<version>-windows-x64.zip`，解压后运行 `start-waybar.cmd` 即可（无需安装 MSYS2）。
+运行单元测试：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Tests $true
+powershell -ExecutionPolicy Bypass -File scripts\test.ps1
+```
+
+CI：`.github/workflows/build-windows.yml` 在 GitHub Actions 上用 MSYS2 构建、运行测试并上传 zip。
 
 ## 构建细节
 

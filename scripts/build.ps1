@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     在 MSYS2 MINGW64 环境中配置并编译 WaybarForWindows。
@@ -60,7 +60,7 @@ if ($Clean) {
 $posixRoot = (& $bash -lc "cygpath -u '$repoRoot'").Trim()
 if ($LASTEXITCODE -ne 0 -or -not $posixRoot) { throw "无法转换仓库路径为 MSYS2 路径" }
 
-$testsValue = if ($Tests) { 'true' } else { 'false' }
+$testsValue = if ($Tests) { 'enabled' } else { 'disabled' }
 $ninjaJobs = [Math]::Max(1, [Environment]::ProcessorCount)
 
 Write-Host "==> 配置与编译" -ForegroundColor Cyan

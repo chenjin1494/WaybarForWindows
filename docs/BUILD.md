@@ -56,7 +56,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Configuration debug 
 ```bash
 export PATH=/mingw64/bin:/usr/bin:/bin
 cd /d/data/git/WaybarForWindows
-meson setup build --buildtype=release -Dtests=true
+meson setup build --buildtype=release -Dtests=enabled
 meson compile -C build
 ```
 
@@ -78,18 +78,26 @@ powershell -ExecutionPolicy Bypass -File scripts\run.ps1 `
 ## 5. 测试
 
 ```powershell
+# 先以 -Dtests=enabled 配置（build.ps1 默认就是这样）
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 powershell -ExecutionPolicy Bypass -File scripts\test.ps1
-powershell -ExecutionPolicy Bypass -File scripts\test.ps1 -Filter waybar -Verbose
 ```
+
+测试目标 `win32-tests` 覆盖：布局计算、UTF-8 路径/环境变量/通配展开、CreateProcess
+引号与中文路径、命名管道控制通道。上游 `test/`（Catch2）需要 vendored Catch2，见 P4 说明。
 
 ## 6. 打包（P5）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\package.ps1
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1           # 构建 + 打包
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1 -SkipBuild # 仅打包现有产物
 ```
 
-（脚本在 P5 阶段实现：用 `ntldd` 递归收集 DLL，复制 GTK share/schemas/loaders 与默认配置到
-`dist\waybar\`，生成便携 zip。）
+脚本以 `waybar.exe` 为根，通过 `objdump -p` 递归解析 PE 依赖并收集 mingw64 中的第三方 DLL，
+再复制 GTK 运行期资源（`share/glib-2.0/schemas`、Adwaita 图标、gdk-pixbuf loaders、字体配置）、
+示例配置与 `start-waybar.cmd`，最终生成 `dist\waybar-<version>-windows-x64.zip`。
+
+CI：`.github/workflows/build-windows.yml`（MSYS2，构建 + 测试 + 打包 + 上传 artifact）。
 
 ## 7. 故障排查
 
@@ -108,7 +116,8 @@ powershell -ExecutionPolicy Bypass -File scripts\package.ps1
 | 路径 | 说明 |
 |---|---|
 | `build/` | meson 构建目录（git 忽略） |
-| `dist/` | 打包产物（git 忽略） |
+| `dist/` | 打包产物 zip 与临时 staging（git 忽略） |
+| `tests/` | Windows 平台层单元测试（`-Dtests=enabled` 时构建） |
 | `D:\tools\msys64` | 工具链（仓库之外，git 忽略） |
 | `src/win32/`、`include/win32/` | Windows 平台层 |
 | `scripts/` | 环境/构建/运行/测试/打包脚本 |

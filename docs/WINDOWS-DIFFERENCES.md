@@ -115,3 +115,8 @@
 |---|---|
 | `network` | `GetAdaptersAddresses` 选路（优先有网关、其次无线）→ IPv4/IPv6/cidr；无线再走 `WlanQueryInterface` 取 SSID 与信号质量；带宽用 `GetIfEntry2` 的 `InOctets`/`OutOctets` 差分并按秒归一化。注意 `winsock2.h` 必须先于 `windows.h`，并链接 `ws2_32`。 |
 | `pulseaudio` | Core Audio：`MMDeviceEnumerator` → 默认 `eRender/eConsole` 端点 → `IAudioEndpointVolume` 读/写音量与静音。每次采样独立 `CoInitializeEx`，避免跨线程持有 COM；链接 `ole32`/`uuid`。 |
+### 控制通道的命名管道注意事项（P4 测试发现）
+
+- `CreateNamedPipeW` 的 `dwOpenMode` **必须**包含 `FILE_FLAG_OVERLAPPED`；否则即使给 `ConnectNamedPipe` 传 `OVERLAPPED`，调用仍会同步阻塞，导致 `stop()` 无法用 `SetEvent` 唤醒监听线程（测试中表现为进程挂起）。
+- 监听循环用独立 `connect_event` + `WaitForMultipleObjects({stop_event, connect_event})`，避免把停止事件复用为 OVERLAPPED 的完成事件（后者会被连接完成误触发）。
+- 客户端 `CreateFileW` 前先 `WaitNamedPipeW(name, timeout)`，避免服务端暂时没有实例时无限等待。

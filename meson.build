@@ -770,6 +770,24 @@ executable(
     install: true,
 )
 
+if get_option('tests').enabled()
+    # Windows 平台层单元测试（不依赖 catch2；上游 test/ 需要 catch2，见 docs/BUILD.md）
+    test_exe = executable(
+        'win32-tests',
+        [
+            'tests/win32_tests.cpp',
+            'src/win32/common.cpp',
+            'src/win32/paths.cpp',
+            'src/win32/layout.cpp',
+            'src/win32/control.cpp',
+            'src/win32/exec.cpp',
+        ],
+        dependencies: waybar_deps,
+        include_directories: inc_dirs,
+    )
+    test('win32', test_exe, timeout: 120)
+endif
+
 install_data(
     'resources/config.jsonc',
     'resources/style.css',

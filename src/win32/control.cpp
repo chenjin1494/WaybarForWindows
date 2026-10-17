@@ -174,33 +174,46 @@ bool ControlServer::start(Handler handler, const std::string& config_path,
   impl_->thread = std::thread([this] {
     Impl* impl = impl_.get();
     while (impl->running.load()) {
+      // 必须带 FILE_FLAG_OVERLAPPED，否则 ConnectNamedPipe 会无视 OVERLAPPED 同步阻塞，
+      // stop() 的 SetEvent 就无法唤醒监听线程。
       HANDLE pipe = CreateNamedPipeW(
-          impl->pipe_name.c_str(), PIPE_ACCESS_DUPLEX,
+          impl->pipe_name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
           PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 1, 8192, 8192, 0, nullptr);
       if (pipe == INVALID_HANDLE_VALUE) {
         spdlog::warn("[control] CreateNamedPipe failed: {}", last_error());
         return;
       }
 
+      HANDLE connect_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
       OVERLAPPED overlapped{};
-      overlapped.hEvent = impl->stop_event;
+      overlapped.hEvent = connect_event;
+      bool stop_requested = false;
+
       BOOL connected = ConnectNamedPipe(pipe, &overlapped);
       if (!connected) {
         const DWORD error = GetLastError();
         if (error == ERROR_IO_PENDING) {
-          const DWORD wait = WaitForSingleObject(impl->stop_event, INFINITE);
+          HANDLE events[2] = {impl->stop_event, connect_event};
+          const DWORD wait = WaitForMultipleObjects(2, events, FALSE, INFINITE);
           if (wait == WAIT_OBJECT_0) {
             CancelIoEx(pipe, &overlapped);
-            CloseHandle(pipe);
-            break;
+            stop_requested = true;
+          } else {
+            DWORD transferred = 0;
+            GetOverlappedResult(pipe, &overlapped, &transferred, TRUE);
           }
-          DWORD transferred = 0;
-          GetOverlappedResult(pipe, &overlapped, &transferred, FALSE);
         } else if (error != ERROR_PIPE_CONNECTED) {
           spdlog::warn("[control] ConnectNamedPipe failed: {}", last_error(error));
+          CloseHandle(connect_event);
           CloseHandle(pipe);
           continue;
         }
+      }
+
+      if (stop_requested) {
+        CloseHandle(connect_event);
+        CloseHandle(pipe);
+        break;
       }
 
       char buffer[8192] = {};
@@ -220,6 +233,7 @@ bool ControlServer::start(Handler handler, const std::string& config_path,
       }
       FlushFileBuffers(pipe);
       DisconnectNamedPipe(pipe);
+      CloseHandle(connect_event);
       CloseHandle(pipe);
     }
   });

@@ -193,3 +193,34 @@ baseline:            bars=visible, point(10,10)=WaybarInput
 ```
 
 兼容旧键：`"hide-on-fullscreen": false` 等价于 `ignore`。
+## 10. ZEK-niri 布局在 Windows 上的逐项对应
+
+参考图（用户提供）为左/中/右三段结构，本移植版按下表对应：
+
+| 参考模块 | Windows 实现 | 说明 |
+|---|---|---|
+| `niri/workspaces`（1 2 3） | 新增原生 `workspaces` 模块 | 1..3 数字按钮；点击/滚轮模拟 Ctrl+Win+←/→ 切换 Windows 虚拟桌面并本地高亮（Windows 无公开的虚拟桌面枚举 API） |
+| `niri/window` | `sway/window` | 前台窗口标题，已修复 bar 抢焦点问题 |
+| `custom/colors-theme` | 原脚本 `toggle-colors.ps1` | 切换 `style.css` 的 @import 并触发热重载 |
+| `custom/actions`（Kitty） | Windows Terminal (PowerShell) | 左键 `wt.exe -p "Windows PowerShell"`，右键 `cmd.exe` |
+| `custom/wallpapers` | `ms-settings:personalization-background` | 左键壁纸设置，右键个性化 |
+| `custom/screenshot` | `ms-screenclip:` + 自带脚本 | 左键区域截图、中键全屏 PNG、右键截图工具 |
+| `custom/clipboard` | `ms-settings:clipboard` | 右键清空剪贴板 |
+| `idle_inhibitor`（小眼睛） | 原生 Windows 实现 | **小眼睛 = 防息屏**：眼睛图标表示已禁止自动熄屏，眼睛划线表示正常熄屏；左键切换，`start-activated` 开机即禁止 |
+| `clock#date` / `clock` | 原生时钟 | 左键打开 Windows 日历 |
+| `power-profiles-daemon` | 原生 Windows 实现 | 左键/滚轮循环电源计划（高性能/平衡/节能） |
+| `custom/applauncher`（Arch 徽标） | 改为 Windows 11 徽标（FA windows 字形） | 左键发送 Win 键打开开始菜单，右键设置；背景改为深色以对应参考图的菱形徽标 |
+| `custom/cava`（音频柱） | 新增原生 `custom/cava` 模块 | WASAPI 回环采集 + Goertzel 频谱，18 段方块字符渲染，随系统声音跳动 |
+| `tray`（后台任务） | 新增原生 `tray` 模块 | Windows 通知区域无法嵌入：点击弹出当前窗口列表（可切换），右键打开任务管理器 |
+| `group/ddcutil`（亮度） | `group/ddcutil` + 原生 `backlight`/`backlight/slider` | 滚轮调亮度，抽屉内滑块 |
+| `group/audio`（音量/麦克风） | 原生 `pulseaudio` + 滑块 | 左键静音、右键麦克风、滚轮音量 |
+| `bluetooth` | 新增原生 `bluetooth` 模块 | 检测蓝牙无线电，左键打开设置，右键运行 WinRT 切换脚本 |
+| `network` | 原生 Windows 网络模块 | 左键网络设置 |
+| `battery` | 原生 Windows 电池模块 | 左键电源设置 |
+| `custom/swaync`（通知） | 静态铃铛 + `ms-settings:notifications` | Windows 通知计数无公开 API |
+| `group/powermenu` | `custom/wlogout` | 左键重启 waybar（`--reload`），右键电源设置 |
+| `privacy`（摄像头/麦克风占用） | 移除 | Windows 无对应查询接口 |
+
+配色：新增 `colors-windows.css`，按参考截图取样（深色底 `#1a1f23`、紫色 `#a180c8`、蓝紫 `#7b7ecd`、天蓝 `#7ac1fc`）。
+
+字体：`FiraCode Nerd Font` 优先。

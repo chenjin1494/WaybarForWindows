@@ -87,6 +87,10 @@
 #endif
 #ifdef _WIN32
 #include "modules/windows/network.hpp"
+#include "modules/windows/workspaces.hpp"
+#include "modules/windows/bluetooth.hpp"
+#include "modules/windows/tray.hpp"
+#include "modules/windows/cava.hpp"
 #include "modules/windows/pulseaudio.hpp"
 #endif
 #ifdef HAVE_LIBUDEV
@@ -353,6 +357,18 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "pulseaudio") {
       return new waybar::modules::Pulseaudio(id, config_[name]);
     }
+    if (ref == "workspaces" || ref == "niri/workspaces" || ref == "sway/workspaces") {
+      return new waybar::modules::Workspaces(id, config_[name]);
+    }
+    if (ref == "bluetooth") {
+      return new waybar::modules::Bluetooth(id, config_[name]);
+    }
+    if (ref == "tray") {
+      return new waybar::modules::Tray(id, config_[name]);
+    }
+    if (ref == "custom/cava") {
+      return new waybar::modules::Cava(id, config_[name]);
+    }
 #endif
 #ifdef HAVE_LIBUDEV
     if (ref == "backlight") {
@@ -370,6 +386,18 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
 #ifdef HAVE_LIBPULSE
     if (ref == "pulseaudio") {
       return new waybar::modules::Pulseaudio(id, config_[name]);
+    }
+    if (ref == "workspaces" || ref == "niri/workspaces" || ref == "sway/workspaces") {
+      return new waybar::modules::Workspaces(id, config_[name]);
+    }
+    if (ref == "bluetooth") {
+      return new waybar::modules::Bluetooth(id, config_[name]);
+    }
+    if (ref == "tray") {
+      return new waybar::modules::Tray(id, config_[name]);
+    }
+    if (ref == "custom/cava") {
+      return new waybar::modules::Cava(id, config_[name]);
     }
     if (ref == "pulseaudio/slider") {
       return new waybar::modules::PulseaudioSlider(id, config_[name]);

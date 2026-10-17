@@ -1,5 +1,5 @@
 /* 主题配色：由 modules-center 的「配色切换」模块（custom/colors-theme）一键切换 */
-@import "colors-noctalia.css";
+@import "colors-windows.css";
 
 /* 核心逻辑：全相对单位 (em) 改造
    基准字体大小：14.5px
@@ -585,3 +585,30 @@ window#waybar.empty #window {
 
 /* 电源分组 #group/powermenu 的子模块统一展开 */
 #custom-wlogout        { animation: nc-in-right 0.5s linear 0.87s both; }
+
+/* cava 高度：方块字符会抬高行高，这里限制字号 */
+#custom-cava {
+    font-size: 11px;
+}
+
+/* Windows: 中央徽标使用深色底（对应参考图的 Arch 徽标菱形）*/
+#custom-applauncher {
+    background-color: @surface_container;
+    color: @tertiary;
+}
+
+/* Windows: cava 颜色取参考图的天蓝 */
+#custom-cava {
+    color: #7ac1fc;
+}
+
+/* Windows: 后台任务弹窗 */
+.tray-popup {
+    background-color: @surface_container;
+    border: 1px solid @outline;
+    color: @on_surface;
+}
+.tray-popup button {
+    color: @on_surface;
+    background: transparent;
+}

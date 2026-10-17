@@ -1,0 +1,25 @@
+/*
+ * Windows 复刻版使用的配色：按参考截图取样（深色底 + 紫/蓝紫 + 天蓝点缀）
+ * 由 ZEK-niri 主题的 colors-noctalia.css 结构改写而来。
+ */
+@define-color background #1a1f23;
+@define-color surface #1a1f23;
+@define-color surface_bright #2a343b;
+@define-color surface_container #262f36;
+@define-color surface_container_high #2e3942;
+@define-color on_surface #e6ecf5;
+@define-color on_surface_container #c3d0de;
+@define-color outline #3b4754;
+
+@define-color primary #a180c8;
+@define-color on_primary #17141f;
+@define-color secondary #7b7ecd;
+@define-color on_secondary #eef2fb;
+@define-color secondary_container #2c3350;
+@define-color tertiary #a180c8;
+@define-color on_tertiary #191320;
+@define-color tertiary_container #234a63;
+@define-color clock_background #7b7ecd;
+
+@define-color error #f2555a;
+@define-color on_error #2a0e0f;

@@ -18,7 +18,9 @@
         "clock"
     ],
     "modules-right": [
+        "network",
         "disk",
+        "pulseaudio",
         "battery",
         "idle_inhibitor",
         "keyboard-state",
@@ -51,13 +53,29 @@
         "format": "L {load1:.2f}",
         "tooltip": false
     },
-    "disk": {
+    "network": {
+        "interval": 5,
+        "format-wifi": " {essid} ({signalStrength}%)",
+        "format-ethernet": " {ipaddr}",
+        "format-linked": " {ifname}",
+        "format-disconnected": "offline",
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}"
+    },    "disk": {
         "interval": 60,
         "format": " {percentage_used}%",
         "paths": ["/"],
         "tooltip-format": "{used} used out of {total} on {path} ({percentage_used}%)"
     },
-    "battery": {
+    "pulseaudio": {
+        "interval": 5,
+        "format": "{icon} {volume}%",
+        "format-muted": " muted",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "scroll-step": 5,
+        "tooltip-format": "音量 {volume}%"
+    },    "battery": {
         "interval": 30,
         "format": "{capacity}% {icon}",
         "format-charging": "{capacity}% ⚡",

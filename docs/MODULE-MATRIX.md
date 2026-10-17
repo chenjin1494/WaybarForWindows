@@ -37,9 +37,9 @@
 |---|---|---|---|
 | `load` | PDH `Processor Queue Length` + EMA | ✅ P2（B） | Windows 无 loadavg，1/5/15 分钟为指数滑动平均 |
 | `cpu_frequency` | 注册表 `~MHz` 标称频率 | ✅ P2（B） | 非实时频率（MSYS2 缺 `PROCESSOR_POWER_INFORMATION`） |
-| `network` | WlanAPI + `GetAdaptersAddresses` + `GetIfTable2` | ⏳ | `bandwidth` 用计数器差值；`ifname` 匹配适配器名 |
-| `pulseaudio` | Core Audio 默认端点 | ⏳ | `format-muted`/`format-source*`/`scroll-step` 支持；PulseAudio 专有键忽略 |
-| `pulseaudio/slider` | Core Audio `IAudioEndpointVolume` | ⏳ | |
+| `network` | WlanAPI + `GetAdaptersAddresses` + `GetIfEntry2` | ✅ P2（B） | IPv4/IPv6、SSID/信号、带宽计数器差值；`format-alt` 未接点击切换 |
+| `pulseaudio` | Core Audio `IAudioEndpointVolume` | ✅ P2（B） | 支持 `format-muted`/`format-icons`/`scroll-step`/`max-volume`/on-click/on-scroll；`format-source*` 忽略 |
+| `pulseaudio/slider` | Core Audio `IAudioEndpointVolume` | ⏳ | 待实现（可复用 `pulseaudio` 的读写封装） |
 | `backlight` | WMI `WmiMonitorBrightness` | ⏳ | 仅内置屏；外接屏 DDC/CI 待定 |
 | `backlight/slider` | 同上 + `WmiMonitorBrightnessMethods` | ⏳ | |
 | `temperature` | WMI 热区 / LibreHardwareMonitor WMI | ⏳ | 多数台式机无热区 → 运行期降级并告警 |

@@ -128,6 +128,8 @@ if is_windows
         compiler.find_library('powrprof'),
         compiler.find_library('wlanapi'),
         compiler.find_library('iphlpapi'),
+        compiler.find_library('ws2_32'),
+        compiler.find_library('uuid'),
         compiler.find_library('setupapi'),
         compiler.find_library('propsys'),
         compiler.find_library('bthprops'),
@@ -325,6 +327,8 @@ if is_windows
         'src/modules/windows/battery.cpp',
         'src/modules/windows/idle_inhibitor.cpp',
         'src/modules/windows/keyboard_state.cpp',
+        'src/modules/windows/network.cpp',
+        'src/modules/windows/pulseaudio.cpp',
     )
     add_project_arguments('-DHAVE_WIN32_PLATFORM', language: 'cpp')
     add_project_arguments('-DHAVE_CPU_WINDOWS', language: 'cpp')

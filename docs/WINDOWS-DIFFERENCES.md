@@ -109,3 +109,9 @@
 | `keyboard-state` | `GetKeyState` + `AttachThreadInput` | 必须先 attach 到前台窗口线程才能读到真实锁定状态 |
 
 新增链接库：`ntdll`（`NtQuerySystemInformation`）、`advapi32`（注册表）、`ole32`/`oleaut32`（后续 WMI/Core Audio）。
+### P2 第二批：network / pulseaudio
+
+| 模块 | 实现要点 |
+|---|---|
+| `network` | `GetAdaptersAddresses` 选路（优先有网关、其次无线）→ IPv4/IPv6/cidr；无线再走 `WlanQueryInterface` 取 SSID 与信号质量；带宽用 `GetIfEntry2` 的 `InOctets`/`OutOctets` 差分并按秒归一化。注意 `winsock2.h` 必须先于 `windows.h`，并链接 `ws2_32`。 |
+| `pulseaudio` | Core Audio：`MMDeviceEnumerator` → 默认 `eRender/eConsole` 端点 → `IAudioEndpointVolume` 读/写音量与静音。每次采样独立 `CoInitializeEx`，避免跨线程持有 COM；链接 `ole32`/`uuid`。 |

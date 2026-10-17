@@ -145,3 +145,21 @@ tooltip label {
 #keyboard-state label.locked {
     color: #e0af68;
 }
+
+#network {
+    padding: 0 10px;
+    color: #7dcfff;
+}
+
+#network.disconnected {
+    color: #f7768e;
+}
+
+#pulseaudio {
+    padding: 0 10px;
+    color: #bb9af7;
+}
+
+#pulseaudio.muted {
+    color: #f7768e;
+}

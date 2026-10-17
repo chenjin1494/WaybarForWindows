@@ -85,6 +85,10 @@
 #ifdef HAVE_LIBNL
 #include "modules/network.hpp"
 #endif
+#ifdef _WIN32
+#include "modules/windows/network.hpp"
+#include "modules/windows/pulseaudio.hpp"
+#endif
 #ifdef HAVE_LIBUDEV
 #include "modules/backlight.hpp"
 #include "modules/backlight_slider.hpp"
@@ -330,6 +334,14 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
 #ifdef HAVE_LIBNL
     if (ref == "network") {
       return new waybar::modules::Network(id, config_[name]);
+    }
+#endif
+#ifdef _WIN32
+    if (ref == "network") {
+      return new waybar::modules::Network(id, config_[name]);
+    }
+    if (ref == "pulseaudio") {
+      return new waybar::modules::Pulseaudio(id, config_[name]);
     }
 #endif
 #ifdef HAVE_LIBUDEV

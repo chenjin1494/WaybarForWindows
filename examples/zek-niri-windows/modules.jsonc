@@ -22,7 +22,7 @@
         "on-click": "cmd /c start outlookcal:"
     },
     "workspaces": {
-        "count": 3
+        "count": 2
     },
     "tray": {
         "format": "\uF00A"

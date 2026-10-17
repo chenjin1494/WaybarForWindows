@@ -1,5 +1,6 @@
 #include "modules/windows/workspaces.hpp"
 
+#include <glibmm/main.h>
 #include <spdlog/spdlog.h>
 #include <windows.h>
 
@@ -33,9 +34,10 @@ void sendWorkspaceSwitch(int direction) {
 
 Workspaces::Workspaces(const std::string& id, const Json::Value& config)
     : AModule(config, "workspaces", id, false, true) {
-  if (config_["count"].isInt()) {
-    count_ = std::clamp(config_["count"].asInt(), 1, 9);
-  }
+  // 默认两个工作区；点击最后一个时自动新增（模拟 Niri 动态工作区）
+  count_ = config_["count"].isInt()
+               ? std::clamp(config_["count"].asInt(), 1, 9)
+               : 2;
   event_box_.set_name("workspaces");
   event_box_.add(box_);
   box_.set_name("workspaces");
@@ -62,6 +64,16 @@ void Workspaces::rebuild() {
       const int delta = index - active_;
       if (delta != 0) {
         switchBy(delta);
+      }
+      // 点击最后一个工作区：切换后自动新建一个（1 2 -> 1 2 3 -> ...）
+      // 用 idle 延后重建，避免在按钮自身的 clicked 信号里删除按钮
+      if (index == count_ - 1 && count_ < 9) {
+        Glib::signal_idle().connect_once([this] {
+          if (count_ < 9) {
+            ++count_;
+            rebuild();
+          }
+        });
       }
     });
     box_.pack_start(*button, false, false, 0);

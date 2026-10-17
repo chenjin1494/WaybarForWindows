@@ -589,6 +589,7 @@ window#waybar.empty #window {
 #custom-cava {
     font-size: 11px;
     color: @cava_color;
+    padding-top: 2px; /* 音频柱整体下移一点 */
 }
 
 /* 徽标区：全部使用 palette 变量，紫/暖两套配色自动适配

@@ -86,6 +86,20 @@ foreach ($item in @('bin', 'share', 'lib', 'etc', 'config', 'LICENSE', 'README.m
     }
 }
 
+# 附带主题（可选，安装后复制到 config 目录即可使用）
+$themesDst = Join-Path $payloadDst 'themes'
+New-Item -ItemType Directory -Force $themesDst | Out-Null
+$themeSources = @{
+    'zek-niri-windows' = Join-Path $repoRoot 'examples\zek-niri-windows'
+    'all-modules'      = Join-Path $repoRoot 'examples\windows'
+}
+foreach ($name in $themeSources.Keys) {
+    $src = $themeSources[$name]
+    if (Test-Path $src) {
+        Copy-Item $src (Join-Path $themesDst $name) -Recurse -Force
+    }
+}
+
 # 安装说明
 $readme = @"
 Waybar for Windows 安装包（v$version）

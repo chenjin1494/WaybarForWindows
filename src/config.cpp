@@ -136,18 +136,29 @@ void Config::setupConfig(Json::Value& dst, const std::string& config_file, int d
   std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
   util::JsonParser parser;
   Json::Value tmp_config = parser.parse(str);
+  // include 的相对路径优先按“当前配置文件所在目录”解析（上游配置通常与 include 同目录）
+  const std::string base_dir = win32::parent_path(config_file);
   if (tmp_config.isArray()) {
     for (auto& config_part : tmp_config) {
-      resolveConfigIncludes(config_part, depth);
+      resolveConfigIncludes(config_part, depth, base_dir);
     }
   } else {
-    resolveConfigIncludes(tmp_config, depth);
+    resolveConfigIncludes(tmp_config, depth, base_dir);
   }
   mergeConfig(dst, tmp_config);
 }
 
 std::vector<std::string> Config::findIncludePath(const std::string& name,
-                                                 const std::vector<std::string>& dirs) {
+                                                 const std::vector<std::string>& dirs,
+                                                 const std::string& base_dir) {
+  // 1) 相对配置目录（真实配置里 include 与主配置同目录）
+  if (!base_dir.empty()) {
+    auto relative = tryExpandPath(base_dir, name);
+    if (!relative.empty()) {
+      return relative;
+    }
+  }
+  // 2) 当前工作目录
   auto match1 = tryExpandPath(name, "");
   if (!match1.empty()) {
     return match1;
@@ -166,12 +177,12 @@ std::vector<std::string> Config::findIncludePath(const std::string& name,
   return {};
 }
 
-void Config::resolveConfigIncludes(Json::Value& config, int depth) {
+void Config::resolveConfigIncludes(Json::Value& config, int depth, const std::string& base_dir) {
   Json::Value includes = config["include"];
   if (includes.isArray()) {
     for (const auto& include : includes) {
       spdlog::info("Including resource file: {}", include.asString());
-      auto matches = findIncludePath(include.asString());
+      auto matches = findIncludePath(include.asString(), CONFIG_DIRS, base_dir);
       if (!matches.empty()) {
         for (const auto& match : matches) {
           setupConfig(config, match, depth + 1);
@@ -182,7 +193,7 @@ void Config::resolveConfigIncludes(Json::Value& config, int depth) {
     }
   } else if (includes.isString()) {
     spdlog::info("Including resource file: {}", includes.asString());
-    auto matches = findIncludePath(includes.asString());
+    auto matches = findIncludePath(includes.asString(), CONFIG_DIRS, base_dir);
     if (!matches.empty()) {
       for (const auto& match : matches) {
         setupConfig(config, match, depth + 1);

@@ -1,0 +1,77 @@
+/*
+ * Waybar 配色方案（由 Noctalia 模板自动生成）
+ * 源图片/调色板：/home/user/图片/壁纸/DD9B0366650E72DBAB0D3775D7568940.jpg
+ * 当前模式：dark
+ *
+ * ⚠ 不要手动编辑本文件。
+ *   如需修改，请编辑模板：~/.config/noctalia/templates/waybar-colors.css
+ *   然后运行：noctalia msg templates-apply
+ */
+
+/* —— Background / Surface —— */
+@define-color background                #1a1b23;
+@define-color on_background             #f2f2f3;
+@define-color surface                   #1a1b23;
+@define-color on_surface                #f2f2f3;
+@define-color surface_variant           #212430;
+@define-color on_surface_variant        #afb0b6;
+@define-color surface_dim               #121317;
+@define-color surface_bright            #313549;
+@define-color surface_container_lowest  #0d0e11;
+@define-color surface_container_low     #16171d;
+@define-color surface_container         #2b2e3b;
+@define-color surface_container_high    #262936;
+@define-color surface_container_highest #2d3143;
+
+/* —— Primary —— */
+@define-color primary                   #7585d7;
+@define-color on_primary                #1b1c22;
+@define-color primary_container         #1f2e7b;
+@define-color on_primary_container      #e0e2eb;
+@define-color primary_fixed             #c4cbee;
+@define-color primary_fixed_dim         #a1abde;
+@define-color on_primary_fixed          #22242a;
+@define-color on_primary_fixed_variant  #2e3038;
+
+/* —— Secondary —— */
+@define-color secondary                 #9885bc;
+@define-color on_secondary              #1b1c22;
+@define-color secondary_container       #3f2d62;
+@define-color on_secondary_container    #e4e0eb;
+@define-color secondary_fixed           #d5cde4;
+@define-color secondary_fixed_dim       #baadd2;
+@define-color on_secondary_fixed        #25222a;
+@define-color on_secondary_fixed_variant #312e38;
+
+/* —— Tertiary —— */
+@define-color tertiary                  #f8eef6;
+@define-color on_tertiary               #1b1c22;
+@define-color tertiary_container        #cc67b8;
+@define-color on_tertiary_container     #000000;
+@define-color tertiary_fixed            #e9c9e2;
+@define-color tertiary_fixed_dim        #daa5cf;
+@define-color on_tertiary_fixed         #2a2229;
+@define-color on_tertiary_fixed_variant #382e36;
+
+/* —— Error —— */
+@define-color error                     #fd4663;
+@define-color on_error                  #1b1c22;
+@define-color error_container           #741d2b;
+@define-color on_error_container        #ecdfe1;
+
+/* —— Outline / utility —— */
+@define-color outline                   #636673;
+@define-color outline_variant           #61667a;
+@define-color shadow                    #1a1b23;
+@define-color scrim                     #000000;
+
+/* —— Inverse —— */
+@define-color inverse_surface           #e4e5e7;
+@define-color inverse_on_surface        #252528;
+@define-color inverse_primary           #3e4c8e;
+
+/* —— Waybar 自定义补充变量（映射到 Noctalia 色板）—— */
+@define-color on_surface_container      #f2f2f3;
+@define-color surface_tint              #7585d7;
+@define-color source_color              #7585d7;
+@define-color clock_background          #9885bc;

@@ -69,3 +69,22 @@ powershell -ExecutionPolicy Bypass -File scripts\make-installer.ps1
 
 `setup.exe` 由 `installer/setup.cpp` 编译（MSYS2 g++，静态链接，无外部依赖）。
 CI（`.github/workflows/build-windows.yml`）会同时上传便携包与安装包 artifact。
+## 6. 附带主题
+
+安装包内含 `themes\` 目录（也可在安装目录的 `themes\` 里找到）：
+
+| 主题 | 说明 |
+|---|---|
+| `zek-niri-windows` | ZEK-niri 主题的 Windows 适配版（含配色切换脚本，见 `docs/CONFIG-COMPAT.md`） |
+| `all-modules` | 启用全部已实现模块的示例配置 |
+
+应用方式：把主题目录内容复制到 `%LOCALAPPDATA%\Programs\Waybar\config\`，然后重启 Waybar
+（开始菜单 → Waybar）。原默认配置可在安装后备份为 `config.default\` 便于还原。
+
+```powershell
+$dst = "$env:LOCALAPPDATA\Programs\Waybar\config"
+Copy-Item "$env:LOCALAPPDATA\Programs\Waybar\themes\zek-niri-windows\*" $dst -Recurse -Force
+& "$env:LOCALAPPDATA\Programs\Waybar\bin\waybar.exe" --reload
+```
+
+字体：该主题使用 Nerd Font 字形，推荐安装 **FiraCode Nerd Font**（`style.css` 已首选它）。

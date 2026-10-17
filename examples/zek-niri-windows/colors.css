@@ -1,0 +1,165 @@
+/*
+* Css Colors
+* Based on Noctalia palette: image-1788066106777-803-fth.json
+* Warm brown / cream / amber theme (dark)
+*
+* 说明：每条 @define-color 后面紧跟的注释，
+* 标注该颜色在 style.css 中被哪些模块引用（“未使用”表示预留/未引用）。
+* 用法示例：#clock { background-color: @primary; }
+*/
+
+    /* 亮度滑块轨道 #backlight-slider trough */
+    @define-color background #291f14;
+
+    /* 隐私 #privacy / 低电量 #battery.critical / 电源菜单 #custom-wlogout / 任务栏 urgent 闪烁动画(blink) */
+    @define-color error #fd4663;
+
+    /* 未使用 */
+    @define-color error_container #7a2e32;
+
+    /* 未使用 */
+    @define-color inverse_on_surface #291f14;
+
+    /* 未使用 */
+    @define-color inverse_primary #9c8973;
+
+    /* 未使用 */
+    @define-color inverse_surface #f3f2f2;
+
+    /* 未使用（全局文字实际用的是 on_surface） */
+    @define-color on_background #f3f2f2;
+
+    /* 性能模式 #power-profiles-daemon.performance */
+    @define-color on_error #251f18;
+
+    /* 未使用 */
+    @define-color on_error_container #feb9c4;
+
+    /* 应用启动器文字 #custom-applauncher */
+    @define-color on_primary #251f18;
+
+    /* 未使用 */
+    @define-color on_primary_container #fbe4c9;
+
+    /* 未使用 */
+    @define-color on_primary_fixed #251f18;
+
+    /* 未使用 */
+    @define-color on_primary_fixed_variant #645544;
+
+    /* 时钟 #clock / 分隔符 #custom-right_div.4 */
+    @define-color on_secondary #251f18;
+
+    /* 未使用（日期原用，已改为 clock_background） */
+    @define-color on_secondary_container #f9fbc9;
+
+    /* 未使用 */
+    @define-color on_secondary_fixed #251f18;
+
+    /* 未使用 */
+    @define-color on_secondary_fixed_variant #635c44;
+
+    /* 全局文字 window#waybar / 提示框文字 tooltip label / 窗口名 #window / 通知 #custom-swaync */
+    @define-color on_surface #f3f2f2;
+
+    /* 通知 #custom-mako（自定义补充变量） */
+    @define-color on_surface_container #d4d2d0;
+
+    /* 未使用 */
+    @define-color on_surface_variant #b6b3af;
+
+    /* 工作区悬停 #workspaces button:hover / 电源模式 #power-profiles-daemon / 日期 #clock.date / 防休眠 #idle_inhibitor / 均衡模式 #power-profiles-daemon.balanced */
+    @define-color on_tertiary #251f18;
+
+    /* 未使用 */
+    @define-color on_tertiary_container #f7cd6d;
+
+    /* 未使用 */
+    @define-color on_tertiary_fixed #251f18;
+
+    /* 未使用 */
+    @define-color on_tertiary_fixed_variant #624d26;
+
+    /* 提示框边框 tooltip */
+    @define-color outline #73695e;
+
+    /* 未使用 */
+    @define-color outline_variant #4a4035;
+
+    /* 应用启动器背景 #custom-applauncher / 音乐可视化 #custom-cava / 媒体信息 #mpris / 分隔符 #custom-right_div.1·#custom-left_div.1 / 任务栏 urgent 闪烁终点(blink) */
+    @define-color primary #f67d04;
+
+    /* 未使用 */
+    @define-color primary_container #786855;
+
+    /* 未使用 */
+    @define-color primary_fixed #fadfc0;
+
+    /* 未使用 */
+    @define-color primary_fixed_dim #c6af95;
+
+    /* 未使用 */
+    @define-color scrim #000000;
+
+    /* 中间工具组文字 #custom-actions·#custom-screenshot·#custom-wallpapers·#custom-clipboard·#custom-settings / 蓝牙·网络·电池文字 #bluetooth·#network·#battery / 分隔符 #custom-right_div.11 背景 / 分隔符 #custom-right_div.2 */
+    @define-color secondary #ff9e9e;
+
+    /* 提示框背景 tooltip（日期原用，已改 clock_background） */
+    @define-color secondary_container #787255;
+
+    /* 未使用 */
+    @define-color secondary_fixed #f8fac0;
+
+    /* 未使用 */
+    @define-color secondary_fixed_dim #c4c395;
+
+    /* 未使用 */
+    @define-color shadow #291f14;
+
+    /* 未使用（Noctalia 调色板种子色元数据） */
+    @define-color source_color #fadfc0;
+
+    /* 工作区按钮 #workspaces button / 任务栏聚焦 .niri-taskbar button.focused / 电源菜单按钮 / 音量滑块轨道 #pulseaudio-slider trough / 多个分隔符(#custom-right_div.5·#custom-left_div.5·#custom-left_div.6) */
+    @define-color surface #291f14;
+
+    /* 系统托盘 #tray / 分隔符 #custom-left_div.7·#custom-left_div.4 */
+    @define-color surface_bright #41311f;
+
+    /* 任务栏悬停 .niri-taskbar button:hover / 蓝牙·网络·电池 #bluetooth·#network·#battery / 低电量电池 #battery.critical / 多个分隔符(#custom-left_div.11·#custom-right_div.1·#custom-left_div.1·#custom-right_div.11·#custom-left_div.8) */
+    @define-color surface_container #302417;
+
+    /* 主模块底色：窗口名 #window / 任务栏 .niri-taskbar / 中间工具组 / 媒体 #mpris·#custom-cava / 亮度·音量 #backlight·#pulseaudio / 隐私 #privacy / 通知 #custom-swaync·#custom-mako / 多数分隔符 */
+    @define-color surface_container_high #36281a;
+
+    /* 未使用 */
+    @define-color surface_container_highest #3b2d1c;
+
+    /* 未使用 */
+    @define-color surface_container_low #231a11;
+
+    /* 未使用 */
+    @define-color surface_container_lowest #1d160e;
+
+    /* 未使用 */
+    @define-color surface_dim #291f14;
+
+    /* 未使用 */
+    @define-color surface_tint #fadfc0;
+
+    /* 未使用 */
+    @define-color surface_variant #453421;
+
+    /* 活动工作区 #workspaces button.active / 任务栏 urgent .niri-taskbar button.urgent / 亮度·音量 #backlight·#pulseaudio 及滑块 highlight / 电源模式·日期·防休眠 / 分隔符 #custom-left_div.2·#custom-left_div.11 */
+    @define-color tertiary #f6c453;
+
+    /* 工作区未激活按钮文字 #workspaces button */
+    @define-color tertiary_container #775e2c;
+
+    /* 未使用 */
+    @define-color tertiary_fixed #f6c453;
+
+    /* 未使用 */
+    @define-color tertiary_fixed_dim #c39b43;
+
+    /* 时钟 #clock（自定义：淡红色背景） */
+    @define-color clock_background #ff9e9e;

@@ -89,3 +89,27 @@ waybar.exe --config D:\tools\zek-test\waybar\config.jsonc `
 - 快捷键/点击命令（`noctalia`、`ddcutil`、`setsid`、`bash` 脚本）→ 换成 Windows 对应程序，
   或写成 `.cmd`/`.ps1` 并替换 `on-click`；
 - 字体 → 安装 FiraCode Nerd Font（推荐，本次验证用）或配置中指定的 JetBrainsMono Nerd Font Propo。
+## 6. 第二次实测发现并修复：`include` 相对路径解析
+
+把主题部署到**安装目录**（`%LOCALAPPDATA%\Programs\Waybar\config\`）后，从开始菜单启动时出现：
+
+```
+[warning] Unable to find resource file: modules.jsonc
+[warning] Unable to find resource file: modules-dividers.jsonc
+```
+
+原因：`include` 之前只在「当前工作目录 + CONFIG_DIRS（`%USERPROFILE%\.config\waybar` 等）」中查找，
+而安装目录不在其中；快捷方式的工作目录是 `bin\`，于是 include 全部失败（分组/自定义模块随之消失）。
+
+修复（`src/config.cpp`）：`include` 的相对路径**优先按当前配置文件所在目录**解析，
+其次才是 CWD / `WAYBAR_CONFIG_DIR` / `CONFIG_DIRS`；嵌套 include 逐层使用各自文件所在目录。
+该行为与上游把 `config.jsonc` 放在 `~/.config/waybar` 时的直觉一致，也兼容 glob include。
+
+## 7. 随安装包附带主题
+
+安装包 payload 增加 `themes/`：
+
+- `themes/zek-niri-windows/` —— 本文实测的适配版主题（本机已部署到安装目录 `config\`）
+- `themes/all-modules/` —— 全模块示例配置
+
+用法：复制到 `%LOCALAPPDATA%\Programs\Waybar\config\`（或自己的配置目录）即可。

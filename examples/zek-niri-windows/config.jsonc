@@ -1,0 +1,54 @@
+// ZEK-niri 主题（Windows 适配版）
+// 原配置：https://github.com/sky1234762/ZEK-niri/tree/main/configs/waybar
+//
+// 适配点：
+//   - 移除 niri/*、tray、privacy、bluetooth 等 Windows 不支持/无对应概念的模块
+//   - niri/window -> sway/window（本移植版提供前台窗口标题）
+//   - Linux 命令（noctalia/ddcutil/setsid/bash 脚本）替换为 Windows 等价命令或移除
+//   - 字体优先 FiraCode Nerd Font
+{
+    "layer": "top",
+    "position": "top",
+    "fixed-center": true,
+    "reload_style_on_change": false,
+    "include": [
+        "modules.jsonc",
+        "modules-dividers.jsonc"
+    ],
+    "modules-left": [
+        "custom/right_div#5",
+        "sway/window",
+        "custom/right_div#6"
+    ],
+    "modules-center": [
+        "custom/left_div#3",
+        "custom/colors-theme",
+        "custom/actions",
+        "custom/wallpapers",
+        "custom/screenshot",
+        "custom/clipboard",
+        "custom/left_div#2",
+        "idle_inhibitor",
+        "clock#date",
+        "power-profiles-daemon",
+        "custom/left_div#11",
+        "custom/left_div#1",
+        "custom/applauncher",
+        "custom/right_div#1",
+        "custom/right_div#11",
+        "clock",
+        "custom/right_div#2"
+    ],
+    "modules-right": [
+        "custom/left_div#7",
+        "custom/left_div#4",
+        "group/ddcutil",
+        "group/audio",
+        "custom/left_div#8",
+        "network",
+        "battery",
+        "custom/left_div#5",
+        "custom/swaync",
+        "group/powermenu"
+    ]
+}

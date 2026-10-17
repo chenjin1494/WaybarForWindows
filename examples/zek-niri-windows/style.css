@@ -1,0 +1,587 @@
+/* 主题配色：由 modules-center 的「配色切换」模块（custom/colors-theme）一键切换 */
+@import "colors-noctalia.css";
+
+/* 核心逻辑：全相对单位 (em) 改造
+   基准字体大小：14.5px
+   如果需要整体放大缩小，只需修改下方的 14.5px 即可
+*/
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "FiraCode Nerd Font", "JetBrainsMono Nerd Font Propo", "LXGW WenKai Screen", "Microsoft YaHei UI", "Segoe UI Symbol", "Font Awesome 7 Free";
+    /* font-family:"0xProto Nerd Font Propo"; */
+    font-size: 13.0px; /* 基准大小 */
+    opacity: 1;
+}
+
+window#waybar {
+    background: transparent;
+    color: @on_surface;
+    margin: 0px; /* 左右贴合屏幕边缘 */
+    border-radius: 0px; /* 角落无圆角，贴合四角 */
+}
+
+/* 鼠标悬浮信息提示 */
+tooltip {
+    background: @secondary_container;
+    border: 0.17em solid @outline; /* 3px */
+    opacity: 1;
+    text-shadow: none; /* 消除文本阴影 */
+}
+
+tooltip label {
+    color: @on_surface;
+    font-size: 0.89em; /* 16px */
+    text-shadow: none; /* 消除文本阴影 */
+}
+
+
+/* 工作区 */
+#workspaces button {
+    padding: 0px 0.56em; /* 10px */
+    background: @surface;
+    color: @tertiary_container;
+}
+
+/* #workspaces label {
+    font-size: 1.22em; 
+} */
+
+#workspaces button:hover {
+    background: @on_tertiary;
+}
+
+#workspaces button.active{
+    color:@tertiary;
+}
+
+#custom-right_div.5 {
+    background: @surface_container_high;
+    color: @surface;
+    font-size: 1.39em; /* 25px */
+    padding: 0px;
+}
+
+/* waybar niri taskbar */
+.niri-taskbar {
+    background: @surface_container_high;
+    padding: 0 0 0 0.28em; /* 5px */
+}
+
+.niri-taskbar button:hover {
+    background: @surface_container;
+}
+
+.niri-taskbar button.focused {
+    background: @surface;
+}
+
+.niri-taskbar button.urgent {
+    background-color: @tertiary;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: steps(12);
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+@keyframes blink {
+    to {
+        background-color: @primary;
+        color: @error;
+    }
+}
+
+/* 窗口名 */
+#window {
+    padding: 0px 0.56em; /* 10px */
+    background-color: @surface_container_high;
+    color: @on_surface;
+}
+
+#window label {
+    font-size: 0.89em; /* 16px */
+}
+
+window#waybar.empty #window {
+    background-color: @surface_container_high;
+}
+
+#custom-right_div.6 {
+    color: @surface_container_high;
+    font-size: 1.39em; /* 25px */
+    padding: 0px;
+}
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+
+/* 中间 */
+
+#custom-left_div.3 {
+    color: @surface_container_high;
+    /* 调节这里的padding可以移动中心的模块位置 */
+    padding: 0px 0em 0em 0.1em;
+    font-size: 1.39em; /* 25px */
+}
+
+
+#custom-actions {
+    padding: 0px 0.3em 0px 0.5em; /* 7px */
+    font-size: 1.35em; /* 20px */
+}
+
+/* 配色切换（手写 / Noctalia） */
+#custom-colors-theme {
+    /* 右侧 0.15em + 终端模块左侧 0.5em = 0.65em，
+       与 截图↔剪贴板 (0.35em + 0.3em) 的间距一致 */
+    padding: 0px 0.15em 0px 0.4em;
+    font-size: 1.25em;
+}
+#custom-colors-theme.manual   { color: @secondary; }
+#custom-colors-theme.noctalia { color: @tertiary; }
+
+ #custom-screenshot {
+    padding: 0px 0.35em; /* 7px */
+    font-size: 1.15em; /* 22px */
+}
+
+#custom-wallpapers{
+    padding: 0 0.5em 0 0.3em; /* 7px */
+    font-size: 1.15em; /* 22px */
+}
+#custom-clipboard{
+    padding: 0 0.5em 0 0.3em; /* 7px */
+    font-size: 1.15em; /* 22px */
+}
+
+
+#custom-actions,
+#custom-colors-theme,
+#custom-wallpapers,
+#custom-clipboard,
+#custom-settings,
+#custom-screenshot {
+    background-color: @surface_container_high;
+    color: @secondary;
+}
+
+#custom-left_div.2 {
+    background-color: @surface_container_high;
+    color: @tertiary;
+    padding: 0px 0px;
+    font-size: 1.39em; /* 25px */
+}
+
+#power-profiles-daemon,
+#idle_inhibitor {
+    background-color: @tertiary;
+    color: @on_tertiary;
+    padding: 0px 0.36em; /* 6px */
+}
+#idle_inhibitor.activated{
+    padding: 0px 0.4em 0px 0.4em;
+}
+#power-profiles-daemon{
+    padding: 0px 0.4em 0em 0.36em;
+}
+#power-profiles-daemon.performance {
+    color: @on_error;
+    font-size: 1.28em; /* 23px */
+    padding: 0px 0.32em 0px 0.45em; /* 9px 8px */
+}
+
+#power-profiles-daemon.balanced {
+    color: @on_tertiary;
+}
+
+#power-profiles-daemon.power-saver {
+    color: #1aa052;
+
+}
+
+/* 菜单 */
+#custom-left_div.11 {
+    background-color: @tertiary;
+    color: @surface_container
+}
+#custom-applauncher {
+    font-size: 1.39em; /* 25px */
+    padding: 0px 0.39em; /* 7px */
+    margin: 0px;
+    background-color: @primary;
+    color: @on_primary;
+
+}
+#custom-right_div.1,
+#custom-left_div.1 {
+    background-color: @surface_container;
+    color: @primary;
+}
+#custom-left_div.1,
+#custom-right_div.1 {
+    padding: 0px;
+    margin: 0px;
+    font-size: 1.39em; /* 25px */
+}
+#custom-left_div.11,
+#custom-right_div.11 {
+    margin: 0px;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+#custom-right_div.11 {
+
+    background-color: @secondary;
+    color: @surface_container;
+}
+
+/*中间右边第二级*/
+
+#clock {
+    padding: 0px 0.45em 0em 0.45em; /* 8px */
+}
+
+#clock {
+    background-color: @clock_background;
+    color: @on_secondary;
+}
+
+#custom-right_div.2 {
+    background-color: @surface_container_high;
+    color: @secondary;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+
+#custom-cava {
+    background-color: @surface_container_high;
+    color: @primary;
+    padding: 0px 0.35em; /* 7px */
+}
+
+#mpris {
+    background-color: @surface_container_high;
+    color: @primary;
+    padding: 0px 0.39em 0px 0px; /* 7px 0 0 */
+}
+
+#custom-right_div.3 {
+
+    color: @surface_container_high;
+    /* 调节这里的padding可以移动中心的模块位置 */
+    padding: 0px 0em 0px 0px ;
+    font-size: 1.39em; /* 25px */
+}
+#custom-right_div.4 {
+    /* background-color: @surface_container_high; */
+    color: @on_secondary;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+/* —————————————————————————————————————————————————————————————————————————— */
+
+/* 右侧 */
+
+
+#custom-left_div.7 {
+    /* background-color: @surface_container_high; */
+    color: @surface_bright;
+    font-size: 1.39em; /* 25px */
+    padding: 0px;
+}
+
+
+#tray {
+    padding: 0px 0.39em 0px 0.39em; /* 7px */
+    font-size: 1.11em; /* 20px */
+    background-color: @surface_bright;
+}
+
+
+#custom-left_div.4 {
+    background-color: @surface_bright;
+    color: @surface_container_high;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+/* 亮度 */
+#custom-ddcutil-day,
+#custom-ddcutil-night,
+#custom-ddcutil-sleep,
+#custom-separator.1 {
+    background-color: @surface_container_high;
+    color: @tertiary;
+    padding: 0px 0.33em; /* 5px */
+}
+
+#backlight {
+    background-color: @surface_container_high;
+    color: @tertiary;
+    padding: 0px 0.28em 0px 0px; /* 5px */
+}
+
+#backlight-slider {
+    background-color: @surface_container_high;
+    padding: 0px 0.28em 0px 0px; /* 5px */
+}
+
+#backlight-slider slider {
+    min-height: 0px;
+    min-width: 0px;
+    opacity: 0;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    background: none;
+}
+
+#backlight-slider trough {
+    min-height: 0.56em; /* 10px */
+    min-width: 4.44em;  /* 80px */
+    border-radius: 0.28em; /* 5px */
+    opacity: 0;
+    background-color: @background;
+}
+
+#backlight-slider highlight {
+    min-width: 0.56em; /* 10px */
+    border-radius: 0.28em; /* 5px */
+    background-color: @tertiary;
+}
+
+/* 音视频 */
+#privacy {
+    padding: 0px 0.39em; /* 7px */
+}
+
+#privacy {
+    background-color: @surface_container_high;
+    color: @error;
+}
+
+#pulseaudio {
+    padding: 0px 0px 0px 0.28em; /* 5px */
+}
+
+#pulseaudio-slider {
+    padding: 0px 0px 0px 0.56em; /* 10px */
+    margin: 0px;
+}
+
+#pulseaudio-slider,
+#pulseaudio {
+    background-color: @surface_container_high;
+    color: @tertiary;
+}
+
+#pulseaudio-slider slider {
+    min-height: 0px;
+    min-width: 0px;
+    opacity: 0;
+    background-image: none;
+    box-shadow: none;
+    background: none;
+}
+
+#pulseaudio-slider trough {
+    min-height: 0.56em; /* 10px */
+    min-width: 4.44em; /* 80px */
+    border-radius: 0.28em; /* 5px */
+    background-color: @surface;
+}
+
+#pulseaudio-slider highlight {
+    min-width: 0px;
+    border-radius: 0.28em; /* 5px */
+    background-color: @tertiary;
+}
+
+#custom-left_div.8 {
+    background-color: @surface_container_high;
+    color: @surface_container;
+    font-size: 1.39em; /* 25px */
+    padding: 0px;
+}
+
+
+/* 电池 */
+#bluetooth,
+#bluetooth.disabled,
+#network,
+#battery {
+    background-color: @surface_container;
+    color: @secondary;
+    padding: 0px 0.39em; /* 7px */
+    
+}
+
+#battery.critical:not(.charging) {
+    background-color: @surface_container;
+    color: @error;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: steps(12);
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    padding: 0px 0.39em; /* 7px */
+}
+
+#bluetooth {
+    padding: 0px 0.3em 0 0.5em; /* 7px */
+    font-size: 1.13em; /* 20px */
+
+    
+}
+#bluetooth.disabled{
+    padding: 0px 0.2em 0px 0.46em ;
+}
+
+#network {
+    padding: 0px 0.35em 0 0.3em; /* 7px */
+    font-size: 1.1em; /* 22px */
+
+}
+
+
+/* powermenu电源菜单 */
+#custom-left_div.5 {
+    background-color: @surface_container;
+    color: @surface;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+#custom-wlogout {
+    background-color: @surface;
+    color: @error;
+    padding: 0px 0.56em; /* 10px */
+    font-size: 1.39em; /* 25px */
+}
+
+
+
+
+
+#clock.date {
+    padding: 0px 0.39em; /* 7px */
+}
+#custom-datelogo,
+#clock.date {
+    background-color: @tertiary;
+    color: @on_tertiary;
+}
+
+#custom-swaync {
+    background-color: @surface;
+    color: @on_surface;
+    padding: 0px 0.5em; /* 9px */
+}
+
+#custom-mako {
+    background-color: @surface_container_high;
+    color: @on_surface_container;
+    padding: 0px 0.83em; /* 15px */
+}
+
+#custom-left_div.6 {
+    background-color: @surface;
+    color: @surface_container_high;
+    padding: 0px;
+    font-size: 1.39em; /* 25px */
+}
+
+/* ============================================================
+   启动动画
+   中间栏：以 Arch 标志为中心，向左右依次「淡入」
+   - 只动画 opacity，不改尺寸 → 中栏不会重新居中，Arch 不动、无抖动
+   - Arch 标志本身不参与动画
+   外栏：左右两栏分别从各自屏幕边缘「收拢 → 向内展开」
+   ============================================================ */
+@keyframes nc-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* 从屏幕边缘向内展开：
+   - 左栏模块起始沿左边缘堆叠（margin-right 负值），再向右展开
+   - 右栏模块起始沿右边缘堆叠（margin-left 负值），再向左展开
+   - 关键帧只写 from，GTK 以计算值（margin 0 / opacity 1）为终点，结束精确复位
+   - 注：GTK 不允许内容出现在屏幕左边界外，故左栏用“贴左边缘收拢”模拟从屏幕外进入 */
+@keyframes nc-in-left {
+    from { margin-right: -100px; opacity: 0; }
+}
+@keyframes nc-in-right {
+    from { margin-left: -100px; opacity: 0; }
+}
+
+/* 中心锚点：Arch 标志保持原位，不做任何动画 */
+
+/* Arch 左侧栏：由内向外依次淡入 */
+#custom-left_div.1     { animation: nc-fade 0.45s linear 0.05s both; }
+#custom-left_div.11    { animation: nc-fade 0.45s linear 0.10s both; }
+#power-profiles-daemon { animation: nc-fade 0.45s linear 0.15s both; }
+#clock.date            { animation: nc-fade 0.45s linear 0.20s both; }
+#idle_inhibitor        { animation: nc-fade 0.45s linear 0.25s both; }
+#custom-left_div.2     { animation: nc-fade 0.45s linear 0.30s both; }
+#custom-clipboard      { animation: nc-fade 0.45s linear 0.35s both; }
+#custom-screenshot     { animation: nc-fade 0.45s linear 0.40s both; }
+#custom-wallpapers     { animation: nc-fade 0.45s linear 0.45s both; }
+#custom-actions        { animation: nc-fade 0.45s linear 0.50s both; }
+#custom-colors-theme   { animation: nc-fade 0.45s linear 0.52s both; }
+#custom-left_div.3     { animation: nc-fade 0.45s linear 0.55s both; }
+
+/* Arch 右侧栏：由内向外依次淡入 */
+#custom-right_div.1    { animation: nc-fade 0.45s linear 0.05s both; }
+#custom-right_div.11   { animation: nc-fade 0.45s linear 0.10s both; }
+#clock:not(.date)      { animation: nc-fade 0.45s linear 0.15s both; }
+#custom-right_div.2    { animation: nc-fade 0.45s linear 0.20s both; }
+#custom-cava           { animation: nc-fade 0.45s linear 0.25s both; }
+#custom-right_div.3    { animation: nc-fade 0.45s linear 0.30s both; }
+
+/* ============================================================
+   外栏：左右两栏分别从各自屏幕边缘向内展开
+   - 左栏用 nc-in-left（沿左边缘收拢 → 向右展开）
+   - 右栏用 nc-in-right（沿右边缘收拢 → 向左展开）
+   - 分组（ddcutil / audio / powermenu）子模块一起
+   ============================================================ */
+
+/* 左上角（modules-left）：从左边缘向内展开 */
+#custom-right_div.6    { animation: nc-in-left 0.5s linear 0.55s both; }
+#window                { animation: nc-in-left 0.5s linear 0.60s both; }
+#custom-right_div.5    { animation: nc-in-left 0.5s linear 0.65s both; }
+#workspaces            { animation: nc-in-left 0.5s linear 0.70s both; }
+#workspaces button     { animation: nc-in-left 0.5s linear 0.70s both; }
+
+/* 右上角（modules-right）：从右边缘向内展开 */
+#custom-left_div.7     { animation: nc-in-right 0.5s linear 0.35s both; }
+#tray                  { animation: nc-in-right 0.5s linear 0.43s both; }
+#custom-left_div.4     { animation: nc-in-right 0.5s linear 0.47s both; }
+
+/* 亮度分组 #group/ddcutil 的子模块统一展开 */
+#custom-ddcutil-day,
+#backlight-slider,
+#backlight,
+#custom-separator.1,
+#custom-ddcutil-sleep,
+#custom-ddcutil-night { animation: nc-in-right 0.5s linear 0.51s both; }
+
+#privacy               { animation: nc-in-right 0.5s linear 0.55s both; }
+
+/* 音量分组 #group/audio 的子模块统一展开 */
+#pulseaudio,
+#pulseaudio-slider     { animation: nc-in-right 0.5s linear 0.59s both; }
+
+#custom-left_div.8     { animation: nc-in-right 0.5s linear 0.63s both; }
+#bluetooth             { animation: nc-in-right 0.5s linear 0.67s both; }
+#network               { animation: nc-in-right 0.5s linear 0.71s both; }
+#battery               { animation: nc-in-right 0.5s linear 0.75s both; }
+#custom-left_div.5     { animation: nc-in-right 0.5s linear 0.79s both; }
+#custom-swaync         { animation: nc-in-right 0.5s linear 0.83s both; }
+
+/* 电源分组 #group/powermenu 的子模块统一展开 */
+#custom-wlogout        { animation: nc-in-right 0.5s linear 0.87s both; }

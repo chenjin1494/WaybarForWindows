@@ -89,6 +89,7 @@
 #include "modules/windows/network.hpp"
 #include "modules/windows/workspaces.hpp"
 #include "modules/windows/divider.hpp"
+#include "modules/windows/windows_logo.hpp"
 #include "modules/windows/bluetooth.hpp"
 #include "modules/windows/tray.hpp"
 #include "modules/windows/cava.hpp"
@@ -370,6 +371,9 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "custom/cava") {
       return new waybar::modules::Cava(id, config_[name]);
     }
+    if (ref == "custom/applauncher") {
+      return new waybar::modules::WindowsLogo(id, "custom-applauncher", config_[name]);
+    }
     if (ref.rfind("custom/left_div", 0) == 0 || ref.rfind("custom/right_div", 0) == 0 ||
         ref.rfind("custom/left_inv", 0) == 0 || ref.rfind("custom/right_inv", 0) == 0) {
       std::string widget_name = "custom-" + ref.substr(7);
@@ -408,6 +412,9 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     }
     if (ref == "custom/cava") {
       return new waybar::modules::Cava(id, config_[name]);
+    }
+    if (ref == "custom/applauncher") {
+      return new waybar::modules::WindowsLogo(id, "custom-applauncher", config_[name]);
     }
     if (ref.rfind("custom/left_div", 0) == 0 || ref.rfind("custom/right_div", 0) == 0 ||
         ref.rfind("custom/left_inv", 0) == 0 || ref.rfind("custom/right_inv", 0) == 0) {

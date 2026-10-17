@@ -590,25 +590,14 @@ window#waybar.empty #window {
 #custom-cava {
     font-size: 11px;
 }
-
-/* Windows: 中央徽标使用深色底（对应参考图的 Arch 徽标菱形）*/
+/* Windows: 中央 Windows 11 徽标 + 两侧三角形统一 #75AAD7 */
 #custom-applauncher {
-    background-color: @surface_container;
-    color: @tertiary;
+    background-color: #75AAD7;
+    color: #f4f7fb;
 }
-
-/* Windows: cava 颜色取参考图的天蓝 */
-#custom-cava {
-    color: #7ac1fc;
-}
-
-/* Windows: 后台任务弹窗 */
-.tray-popup {
-    background-color: @surface_container;
-    border: 1px solid @outline;
-    color: @on_surface;
-}
-.tray-popup button {
-    color: @on_surface;
-    background: transparent;
+#custom-left_div_1,
+#custom-right_div_1,
+#custom-left_div_11,
+#custom-right_div_11 {
+    color: #75AAD7;
 }

@@ -255,3 +255,11 @@ Windows/GTK 上被忽略，于是分隔符既没有背景色，也没拿到 `fon
 - 工厂里拦截 `custom/left_div*`、`custom/right_div*`、`*_inv*`，其余 custom 模块不受影响。
 
 实测（PrintWindow 抓取 1920×24）：三角形竖边在 y=0..23 全部着色，向右逐渐收窄到尖点。
+### Windows 11 徽标（原生绘制）
+
+`custom/applauncher` 在 Windows 下由原生 `WindowsLogo` 模块接管：
+
+- Cairo 绘制 2×2 四格方块（官方 Win11 徽标样式，白色方块）；
+- 背景色与两侧引导三角形统一为 `#75AAD7`（CSS：`#custom-applauncher { background-color }`、
+  `#custom-left_div_1, #custom-right_div_1, #custom-left_div_11, #custom-right_div_11 { color }`）；
+- 左键发送 Win 键打开开始菜单，右键打开 Windows 设置。

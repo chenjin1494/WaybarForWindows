@@ -1,6 +1,36 @@
 #include "modules/cffi.hpp"
 
+#ifndef _WIN32
 #include <dlfcn.h>
+#else
+#include <windows.h>
+
+#include <string>
+
+#include "win32/common.hpp"
+
+// Windows 没有 dlfcn：用 LoadLibraryW/GetProcAddress 提供同名薄封装，
+// 让 cffi 插件 ABI（wbcffi_*）在 Windows 上也能加载。
+namespace {
+inline void* dlopen(const char* path, int /*flags*/) {
+  return reinterpret_cast<void*>(LoadLibraryW(waybar::win32::to_wide(path).c_str()));
+}
+inline void* dlsym(void* handle, const char* symbol) {
+  return reinterpret_cast<void*>(
+      GetProcAddress(reinterpret_cast<HMODULE>(handle), symbol));
+}
+inline char* dlerror() {
+  static thread_local std::string message;
+  message = "LoadLibrary/GetProcAddress error " + std::to_string(GetLastError());
+  return message.data();
+}
+inline int dlclose(void* handle) {
+  return FreeLibrary(reinterpret_cast<HMODULE>(handle)) ? 0 : -1;
+}
+}  // namespace
+#define RTLD_LAZY 0
+#endif
+
 #include <json/value.h>
 
 #include <algorithm>

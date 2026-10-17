@@ -1,0 +1,136 @@
+/*
+ * Waybar for Windows —— 全模块示例样式
+ * 与 examples/windows/config-all.jsonc 配套使用。
+ */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "CaskaydiaCove Nerd Font", "Segoe UI",
+        "Microsoft YaHei UI", "Segoe UI Symbol", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(24, 28, 36, 0.84);
+    color: #e6edf3;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+window#waybar.hidden {
+    opacity: 0.0;
+}
+
+#custom-hello {
+    padding: 0 12px;
+    color: #7dcfff;
+    font-weight: bold;
+}
+
+#window {
+    padding: 0 12px;
+    color: #c0caf5;
+    font-style: italic;
+}
+
+#taskbar button {
+    padding: 0 10px;
+    margin: 2px 1px;
+    color: #9ece6a;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+}
+
+#taskbar button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+#clock {
+    padding: 0 14px;
+    color: #ffffff;
+    background-image: linear-gradient(90deg, #2f81f7, #a371f7);
+    border-radius: 8px;
+    margin: 3px 0;
+    font-weight: bold;
+}
+
+#cpu,
+#memory,
+#load,
+#temperature,
+#backlight,
+#pulseaudio,
+#network,
+#disk,
+#battery,
+#upower,
+#idle_inhibitor,
+#keyboard-state,
+#language {
+    padding: 0 9px;
+    color: #c0caf5;
+}
+
+#cpu { color: #f7768e; }
+#memory { color: #7aa2f7; }
+#load { color: #e0af68; }
+#temperature { color: #ff9e64; }
+#temperature.warning { color: #e0af68; }
+#temperature.critical { color: #f7768e; }
+#backlight { color: #ffd479; }
+#power-profiles-daemon { color: #a371f7; }
+#power-profiles-daemon.performance { color: #f7768e; }
+#power-profiles-daemon.power-saver { color: #9ece6a; }
+#pulseaudio { color: #bb9af7; }
+#pulseaudio.muted { color: #f7768e; }
+#network { color: #7dcfff; }
+#network.disconnected { color: #f7768e; }
+#disk { color: #9ece6a; }
+#battery { color: #c3e88d; }
+#battery.charging,
+#battery.plugged { color: #9ece6a; }
+#battery.warning:not(.charging) { color: #e0af68; }
+#battery.critical:not(.charging) { color: #f7768e; }
+#upower { color: #c3e88d; }
+#idle_inhibitor.activated { color: #9ece6a; }
+#idle_inhibitor.deactivated { color: #7f849c; }
+#keyboard-state { color: #7f849c; }
+#keyboard-state label.locked { color: #e0af68; }
+#language { color: #73daca; }
+
+/* 滑块模块 */
+#pulseaudio-slider,
+#backlight-slider {
+    padding: 0 10px;
+}
+
+#pulseaudio-slider slider,
+#backlight-slider slider {
+    min-width: 72px;
+    min-height: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.18);
+    box-shadow: none;
+}
+
+#pulseaudio-slider trough,
+#backlight-slider trough {
+    min-width: 72px;
+    min-height: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+#pulseaudio-slider highlight,
+#backlight-slider highlight {
+    border-radius: 4px;
+    background-image: linear-gradient(90deg, #2f81f7, #bb9af7);
+}
+
+tooltip {
+    background-color: rgba(24, 28, 36, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #e6edf3;
+}

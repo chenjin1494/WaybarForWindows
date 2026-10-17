@@ -117,6 +117,7 @@ class Bar : public sigc::trackable {
 #ifdef _WIN32
   // Windows 平台后端（定位/置顶/AppBar/鼠标穿透）
   win32::BarBackend& backend() { return *backend_; }
+  const win32::BarBackend& backend() const { return *backend_; }
 #endif
 
  private:

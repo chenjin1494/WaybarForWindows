@@ -128,3 +128,21 @@ MinGW 的 `main(int argc, char** argv)` 会按 ANSI 代码页转换命令行，�
 
 修复：Windows 分支改用 `CommandLineToArgvW(GetCommandLineW())` 取 UTF-16 命令行，
 逐项 `to_utf8()` 后再交给 clara/GApplication 解析（`src/main.cpp`），并链接 `shell32`。
+---
+
+## 8. P2/P3 收尾模块实现记录（WMI / 电源计划 / 前台窗口 / 任务栏 / cffi）
+
+| 模块 | Windows 数据源 | 关键实现点 |
+|---|---|---|
+| `temperature` | WMI `MSAcpi_ThermalZoneTemperature` | 0.1K → ℃，多热区取最大；WMI 查询放在模块工作线程；无热区时隐藏（台式机常见） |
+| `backlight` / `backlight/slider` | WMI `WmiMonitorBrightness` / `WmiMonitorBrightnessMethods` | `WmiSetBrightness` 需要先取实例 `__PATH` 再 `ExecMethod`；外接屏无此类时隐藏 |
+| `power-profiles-daemon` | `PowerGet/SetActiveScheme` + 标准电源计划 GUID | 三个 GUID 在代码中显式定义（MSYS2 头文件不含这些常量） |
+| `pulseaudio/slider` | Core Audio `IAudioEndpointVolume` | 支持 `min`/`max`/`zero-on-mute`/`unmute-on-volume-change` |
+| `sway/window` | `GetForegroundWindow` + `GetWindowTextW` + 进程名 | 提供 `{title}/{app_id}/{class}/{shell}`，支持 `rewrite`/`max-length`/`tooltip-format` |
+| `sway/language` | `GetKeyboardLayout(前台线程)` | `LOCALE_SABBREVLANGNAME` 归一化为 ISO 639-1（ENU→en、CHS→zh…） |
+| `wlr/taskbar` | `EnumWindows` + `SetForegroundWindow` | 过滤隐形/工具窗口/DWM cloaked；纯文本按钮（图标未实现） |
+| `upower` | `GetSystemPowerStatus` | 与 `battery` 同源，提供 `{percentage}/{state}/{time}` |
+| `cffi/*` | `LoadLibraryW` + `GetProcAddress` | 在 `cffi.cpp` 内提供 `dlopen/dlsym/dlerror/dlclose` 薄封装，复用上游 `wbcffi_*` 插件 ABI |
+
+WMI 使用注意：`CoInitializeSecurity` 只需一次（代码内用静态标志），每次查询独立 `CoInitializeEx`；
+WMI 调用可能耗时数十毫秒，必须放在模块线程中，避免阻塞 GTK 主循环。

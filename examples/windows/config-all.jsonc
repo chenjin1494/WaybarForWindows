@@ -1,0 +1,157 @@
+// Waybar for Windows —— 全模块示例配置
+//
+// 本文件启用当前移植已实现的全部模块，便于验证；日常使用请参考 resources/config.jsonc。
+// 语法与上游一致，可直接把其中片段复制到自己的 config.jsonc。
+{
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "spacing": 8,
+
+    "modules-left": [
+        "custom/hello",
+        "sway/window"
+    ],
+    "modules-center": [
+        "wlr/taskbar"
+    ],
+    "modules-right": [
+        "cpu",
+        "memory",
+        "load",
+        "temperature",
+        "backlight",
+        "power-profiles-daemon",
+        "pulseaudio",
+        "network",
+        "disk",
+        "battery",
+        "upower",
+        "idle_inhibitor",
+        "keyboard-state",
+        "sway/language",
+        "clock"
+    ],
+
+    // ------------------------------------------------ 左侧
+    "custom/hello": {
+        "format": "Waybar Windows",
+        "tooltip": false
+    },
+    "sway/window": {
+        "format": " {title}",
+        "max-length": 48,
+        "tooltip-format": "{title}\n{app_id}",
+        "rewrite": {
+            "^$": "Desktop"
+        }
+    },
+
+    // ------------------------------------------------ 中间
+    "wlr/taskbar": {
+        "format": "{title}",
+        "max-length": 16,
+        "tooltip-format": "{title}\n{app_id}",
+        "interval": 1
+    },
+
+    // ------------------------------------------------ 右侧
+    "cpu": {
+        "format": "CPU {usage}%",
+        "interval": 2,
+        "tooltip": false
+    },
+    "memory": {
+        "format": "RAM {used:0.1f}/{total:0.1f} GiB",
+        "unit": "GiB",
+        "interval": 5,
+        "tooltip": false
+    },
+    "load": {
+        "format": "L {load1:.2f}",
+        "interval": 5,
+        "tooltip": false
+    },
+    "temperature": {
+        "format": " {temperatureC}°C",
+        "critical-threshold": 90,
+        "warning-threshold": 75,
+        "interval": 10
+    },
+    "backlight": {
+        "format": "☀ {percent}%",
+        "scroll-step": 5,
+        "interval": 3
+    },
+    "power-profiles-daemon": {
+        "format": "{profile}",
+        "tooltip-format": "电源计划: {profile}",
+        "interval": 5
+    },
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": " muted",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "scroll-step": 5,
+        "interval": 5,
+        "tooltip-format": "音量 {volume}%"
+    },
+    "network": {
+        "format-wifi": " {essid} ({signalStrength}%)",
+        "format-ethernet": " {ipaddr}",
+        "format-linked": " {ifname}",
+        "format-disconnected": "offline",
+        "interval": 5,
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}"
+    },
+    "disk": {
+        "format": " {percentage_used}%",
+        "paths": ["/"],
+        "interval": 60,
+        "tooltip-format": "{used} used out of {total} on {path} ({percentage_used}%)"
+    },
+    "battery": {
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ⚡",
+        "format-plugged": "{capacity}% 🔌",
+        "format-full": "{capacity}% ✅",
+        "interval": 30,
+        "tooltip-format": "{timeTo} ({capacity}%)"
+    },
+    "upower": {
+        "format": "{percentage}% {icon}",
+        "interval": 30,
+        "tooltip-format": "{percentage}% ({state})"
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "🌙",
+            "deactivated": "☕"
+        },
+        "tooltip-format-activated": "保持唤醒中",
+        "tooltip-format-deactivated": "允许休眠"
+    },
+    "keyboard-state": {
+        "numlock": true,
+        "capslock": true,
+        "scrolllock": false,
+        "interval": 1,
+        "format": "{icon}",
+        "format-icons": {
+            "locked": "🔒",
+            "unlocked": "🔓"
+        }
+    },
+    "sway/language": {
+        "format": " {short}",
+        "tooltip-format": "{long} ({layout})",
+        "interval": 1
+    },
+    "clock": {
+        "format": "{:%H:%M:%S}",
+        "tooltip-format": "{:%Y-%m-%d %A}"
+    }
+}

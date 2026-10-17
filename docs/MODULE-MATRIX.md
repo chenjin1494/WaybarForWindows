@@ -21,7 +21,7 @@
 | `image` | gdk-pixbuf | ✅ P1 | `path`/`interval`/`size` |
 | `custom/*` | `CreateProcessW`（`cmd.exe`） | ✅ P1 | 新增可选 `shell` 键；`exec-if`/`return-type`/`signal`/流式输出保留 |
 | `custom-graph/*` | 同上 + `AGraph` | ✅ P1 | |
-| `cffi/*` | `LoadLibraryW` | ⏳ | 替代 `dlopen` |
+| `cffi/*` | `LoadLibraryW`/`GetProcAddress` | ✅ P2（A-） | 复用上游 `wbcffi_*` 插件 ABI；`module_path` 指向 DLL |
 | `group/*` | 纯 GTK | ✅ P1 | `group/<name>` 与 `drawer` |
 | `idle_inhibitor` | `SetThreadExecutionState` | ✅ P2 | `timeout`/`format-icons`/点击切换；`wait-for-activity` 不支持（告警） |
 | `keyboard-state` | `GetKeyState` + `AttachThreadInput` | ✅ P2 | 比上游 Linux 实现更直接 |
@@ -39,15 +39,15 @@
 | `cpu_frequency` | 注册表 `~MHz` 标称频率 | ✅ P2（B） | 非实时频率（MSYS2 缺 `PROCESSOR_POWER_INFORMATION`） |
 | `network` | WlanAPI + `GetAdaptersAddresses` + `GetIfEntry2` | ✅ P2（B） | IPv4/IPv6、SSID/信号、带宽计数器差值；`format-alt` 未接点击切换 |
 | `pulseaudio` | Core Audio `IAudioEndpointVolume` | ✅ P2（B） | 支持 `format-muted`/`format-icons`/`scroll-step`/`max-volume`/on-click/on-scroll；`format-source*` 忽略 |
-| `pulseaudio/slider` | Core Audio `IAudioEndpointVolume` | ⏳ | 待实现（可复用 `pulseaudio` 的读写封装） |
-| `backlight` | WMI `WmiMonitorBrightness` | ⏳ | 仅内置屏；外接屏 DDC/CI 待定 |
-| `backlight/slider` | 同上 + `WmiMonitorBrightnessMethods` | ⏳ | |
-| `temperature` | WMI 热区 / LibreHardwareMonitor WMI | ⏳ | 多数台式机无热区 → 运行期降级并告警 |
-| `power-profiles-daemon` | `PowerGet/SetActiveScheme` | ⏳ | balanced / high-performance / power-saver |
-| `sway/window` | `GetForegroundWindow` + `GetWindowText` | ⏳ | `rewrite` 等规则键不适用 |
-| `sway/language` | `GetKeyboardLayout` + `WM_INPUTLANGCHANGE` | ⏳ | |
-| `wlr/taskbar` | `EnumWindows` + 图标 + 激活 | ⏳ | `sort-by-app-id` 近似 |
-| `upower` | 聚合电池（等价 `battery`） | ⏳ | |
+| `pulseaudio/slider` | Core Audio `IAudioEndpointVolume` | ✅ P2（B） | 支持 min/max/zero-on-mute/unmute-on-volume-change |
+| `backlight` | WMI `WmiMonitorBrightness` | ✅ P2（B） | 仅内置屏；外接屏无该类时隐藏 |
+| `backlight/slider` | 同上 + `WmiMonitorBrightnessMethods` | ✅ P2（B） | 滑块直接写亮度 |
+| `temperature` | WMI `MSAcpi_ThermalZoneTemperature` | ✅ P2（B） | 多热区取最大值；无热区时隐藏模块 |
+| `power-profiles-daemon` | `PowerGet/SetActiveScheme` | ✅ P2（B） | balanced/performance/power-saver 映射 Windows 电源计划；点击/滚动循环切换 |
+| `sway/window` | `GetForegroundWindow` + `GetWindowText`/进程名 | ✅ P3（B） | 支持 `format`{title}/{app_id}/{class}/`rewrite`/`max-length` |
+| `sway/language` | `GetKeyboardLayout`（前台线程） | ✅ P3（B） | `{short}`/`{long}`/`{layout}`；常见语言映射 ISO 639-1 |
+| `wlr/taskbar` | `EnumWindows` + `SetForegroundWindow` | ✅ P3（B） | 纯文本按钮（图标未实现）；支持 `format`/`tooltip-format`/`max-length` |
+| `upower` | `GetSystemPowerStatus`（等价 `battery`） | ✅ P2（B） | `{percentage}`/`{state}`/`{time}`/`hide-if-empty` |
 
 ## D 级（不支持，告警禁用）
 

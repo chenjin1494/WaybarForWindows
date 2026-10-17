@@ -146,11 +146,21 @@
 #include "modules/custom.hpp"
 #include "modules/custom_graph.hpp"
 #include "modules/image.hpp"
-#ifndef _WIN32
-#include "modules/disk.hpp"
-#endif
-#include "modules/temperature.hpp"
 #include "modules/user.hpp"
+#ifdef _WIN32
+#include "modules/windows/backlight.hpp"
+#include "modules/windows/backlight_slider.hpp"
+#include "modules/windows/power_profiles_daemon.hpp"
+#include "modules/windows/pulseaudio_slider.hpp"
+#include "modules/windows/sway_language.hpp"
+#include "modules/windows/sway_window.hpp"
+#include "modules/windows/taskbar.hpp"
+#include "modules/windows/temperature.hpp"
+#include "modules/windows/upower.hpp"
+#else
+#include "modules/disk.hpp"
+#include "modules/temperature.hpp"
+#endif
 
 waybar::Factory::Factory(const Bar& bar, const Json::Value& config) : bar_(bar), config_(config) {}
 
@@ -420,6 +430,34 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref == "temperature") {
       return new waybar::modules::Temperature(id, config_[name]);
     }
+#else
+    if (ref == "temperature") {
+      return new waybar::modules::Temperature(id, config_[name]);
+    }
+    if (ref == "backlight") {
+      return new waybar::modules::Backlight(id, config_[name]);
+    }
+    if (ref == "backlight/slider") {
+      return new waybar::modules::BacklightSlider(id, config_[name]);
+    }
+    if (ref == "pulseaudio/slider") {
+      return new waybar::modules::PulseaudioSlider(id, config_[name]);
+    }
+    if (ref == "power-profiles-daemon") {
+      return new waybar::modules::PowerProfilesDaemon(id, config_[name]);
+    }
+    if (ref == "upower") {
+      return new waybar::modules::UPower(id, config_[name]);
+    }
+    if (ref == "sway/window") {
+      return new waybar::modules::sway::Window(id, bar_, config_[name]);
+    }
+    if (ref == "sway/language") {
+      return new waybar::modules::sway::Language(id, config_[name]);
+    }
+    if (ref == "wlr/taskbar") {
+      return new waybar::modules::wlr::Taskbar(id, bar_, config_[name]);
+    }
 #endif
     if (ref.compare(0, 7, "custom/") == 0 && ref.size() > 7) {
       return new waybar::modules::Custom(ref.substr(7), id, config_[name], bar_.output->name);
@@ -427,11 +465,9 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     if (ref.compare(0, 13, "custom-graph/") == 0 && ref.size() > 13) {
       return new waybar::modules::CustomGraph(ref.substr(13), id, config_[name], bar_.output->name);
     }
-#ifndef _WIN32
     if (ref.compare(0, 5, "cffi/") == 0 && ref.size() > 5) {
       return new waybar::modules::CFFI(ref.substr(5), id, config_[name]);
     }
-#endif
   } catch (const std::exception& e) {
     auto err = fmt::format("Disabling module \"{}\", {}", name, e.what());
     throw std::runtime_error(err);

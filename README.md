@@ -19,11 +19,11 @@ C++ / GTK3（gtkmm-3.0）代码库，新增 Windows 平台层（窗口、AppBar 
 | P0 | 工具链、仓库骨架、GTK/Win32 关键行为验证 | ✅ 完成 |
 | P1 | 核心 Shell：配置/CSS/窗口/AppBar/模式/CLI/控制通道 | ✅ 完成 |
 | P2 | 核心模块（clock/cpu/memory/load/disk/user/battery/network/audio/adapter相关） | ✅ 核心完成 |
-| P3 | 桌面集成模块（foreground window / taskbar / 输入法语言） | ⏳ 计划中 |
+| P3 | 桌面集成模块（foreground window / taskbar / 输入法语言） | ✅ 完成 |
 | P4 | 测试矩阵、文档、示例配置 | ✅ 完成 |
 | P5 | 打包、CI、发布 | ✅ 完成 |
 
-仍标记 ⏳ 的模块（`temperature`、`backlight`、`power-profiles-daemon`、`pulseaudio/slider`、`cffi/*`、`sway/window` 等）见矩阵，属于后续批次。模块兼容性分级见 [`docs/MODULE-MATRIX.md`](docs/MODULE-MATRIX.md)；Windows 与上游的差异见
+除 D 级（Wayland 合成器/托盘/Linux 服务）外，A/B 级模块均已实现；D 级模块按上游“未知模块”行为告警禁用。全模块示例见 `examples/windows/config-all.jsonc`。模块兼容性分级见 [`docs/MODULE-MATRIX.md`](docs/MODULE-MATRIX.md)；Windows 与上游的差异见
 [`docs/WINDOWS-DIFFERENCES.md`](docs/WINDOWS-DIFFERENCES.md)。
 
 ## 安装（一键安装包）

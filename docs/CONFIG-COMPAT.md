@@ -164,28 +164,32 @@ GTK 的 RGBA 顶层窗口在 Windows 上使用 `UpdateLayeredWindow`，**完全�
   电源计划切换、通知/电源设置均实测生效
 - 前台窗口标题、配色切换脚本（`style.css` 的 `@import` 双向切换）正常
 - `meson test` 通过
-## 9. 全屏应用时自动收起（Wayland 行为对齐）
+## 9. 全屏应用时“保持显示但允许被覆盖”（默认策略）
 
-Windows 版补充了与 Wayland 合成器一致的行为：**前台出现全屏应用时 bar 自动收起，退出全屏后自动展开**。
+早期实现是「全屏时隐藏 bar」，切换有可见的收起/展开动画与工作区抖动。现改为与主流桌面一致的策略：
 
-实现（`src/win32/fullscreen.cpp` + `Client::checkFullscreen`）：
+**bar 常态显示；检测到全屏应用时，把 bar（和它的透明输入层）压到 z-order 底部，
+让全屏窗口自然覆盖它；退出全屏后恢复置顶。** 不隐藏窗口、不注销 AppBar、工作区不变。
 
-- 每 400ms 检测一次；
-- 判定：`SHQueryUserNotificationState`（游戏独占全屏 / 演示模式 / 全屏视频）
-  或「前台窗口无标题栏且铺满所在显示器」（浏览器 F11、视频播放器）；
-- 收起：`set_window_hidden(true)` 真正 `ShowWindow(SW_HIDE)` 并移除 AppBar 预留，
-  工作区恢复为整块显示器；
-- 展开：退出全屏并稳定 2 个周期（约 800ms）后恢复窗口并重新注册 AppBar；
-- 去抖与状态保持：记住触发全屏的窗口句柄，隐藏 bar 导致前台变化时不会反复收起/展开；
-- 配置：bar 配置项 `"hide-on-fullscreen": false` 可对单个 bar 关闭该行为（默认 `true`）。
+- 触发：`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`（前台切换即时响应，日志显示激活瞬间生效）
+  + 150ms 轮询兜底（覆盖同一窗口内 F11 切换全屏的情况）；
+- 判定：`SHQueryUserNotificationState`（独占全屏/演示/全屏视频）或
+  「无标题栏且铺满显示器的前台窗口」；排除 shell、任务栏与 waybar 自身；
+- 覆盖：`SetWindowPos(HWND_BOTTOM)`，bar 与输入层一起下沉，点击直接给全屏应用；
+- 恢复：退出全屏并稳定约 800ms 后 `HWND_TOPMOST`，重新位于最上层。
 
 实测（本机双屏）：
 
 ```
-baseline:        bars=visible  workarea=0,34 1920x998
-全屏窗口打开:     bars=hidden   workarea=0,0  1920x1032   ← AppBar 预留已释放
-全屏窗口关闭:     bars=visible  workarea=0,34 1920x998    ← 自动恢复
+baseline:            bars=visible, point(10,10)=WaybarInput
+全屏窗口打开:         bars=visible, point(10,10)=FULLSCREEN-TEST 窗口   ← bar 被覆盖但仍显示
+全屏窗口关闭:         bars=visible, point(10,10)=WaybarInput           ← 恢复置顶
 ```
 
-> 带标题栏的最大化窗口不会触发收起（任务栏自动隐藏时最大化窗口也会铺满显示器，
-> 因此几何判定额外要求窗口无 `WS_CAPTION`）。
+配置（bar 级，默认 `cover`）：
+
+```jsonc
+"fullscreen-behavior": "cover"   // cover=保持显示但可被覆盖；hide=全屏时收起；ignore=不处理
+```
+
+兼容旧键：`"hide-on-fullscreen": false` 等价于 `ignore`。

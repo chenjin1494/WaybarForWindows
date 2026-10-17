@@ -116,6 +116,7 @@ class Client {
   HWND fullscreen_window_ = nullptr;
   int fullscreen_exit_ticks_ = 0;
   std::vector<Bar*> fullscreen_hidden_bars_;
+  std::vector<Bar*> fullscreen_covered_bars_;
 #endif
 };
 

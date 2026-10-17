@@ -671,6 +671,14 @@ void waybar::Bar::updateBlurRegion() {
 }
 #endif
 
+void waybar::Bar::setFullscreenCovered(bool covered) {
+#ifdef _WIN32
+  if (backend_) backend_->set_fullscreen_covered(covered);
+#else
+  (void)covered;
+#endif
+}
+
 void waybar::Bar::setWindowHidden(bool hidden) {
 #ifdef _WIN32
   if (backend_) backend_->set_window_hidden(hidden);

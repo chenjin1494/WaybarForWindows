@@ -467,6 +467,7 @@ int waybar::Client::main(int argc, char* argv[]) {
 }
 
 void waybar::Client::reset() {
+  waybar::win32::uninstall_foreground_hook();
   gtk_app->quit();
   // delete signal handler for css changes
   if (portal) {
@@ -520,17 +521,39 @@ void waybar::Client::startControlServer() {
 }
 
 #ifdef _WIN32
+namespace {
+std::string fullscreenBehavior(const Json::Value& bar_config) {
+  if (bar_config["fullscreen-behavior"].isString()) {
+    std::string value = bar_config["fullscreen-behavior"].asString();
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (value == "hide" || value == "ignore" || value == "cover") {
+      return value;
+    }
+  }
+  if (bar_config["hide-on-fullscreen"].isBool() && !bar_config["hide-on-fullscreen"].asBool()) {
+    return "ignore";
+  }
+  return "cover";
+}
+}  // namespace
 void waybar::Client::startFullscreenWatch() {
   if (fullscreen_watch_.connected()) {
     return;
   }
-  // 400ms 轮询：SHQueryUserNotificationState 很便宜，足够在切屏时及时响应。
+  // 前台窗口变化时立即检查（SetWinEventHook 回调运行在 GTK 消息循环所在线程），
+  // 150ms 轮询作为同一窗口内切换全屏（如浏览器 F11）的兜底。
+  waybar::win32::install_foreground_hook([this] {
+    if (!bars.empty()) {
+      checkFullscreen();
+    }
+  });
   fullscreen_watch_ = Glib::signal_timeout().connect(
       [this] {
         checkFullscreen();
         return true;
       },
-      400);
+      150);
 }
 
 void waybar::Client::checkFullscreen() {
@@ -560,16 +583,22 @@ void waybar::Client::checkFullscreen() {
       fullscreen_active_ = true;
       fullscreen_window_ = candidate;
       fullscreen_hidden_bars_.clear();
+      fullscreen_covered_bars_.clear();
       for (auto& bar : bars) {
-        if (bar->config["hide-on-fullscreen"].isBool() &&
-            !bar->config["hide-on-fullscreen"].asBool()) {
+        const auto behavior = fullscreenBehavior(bar->config);
+        if (behavior == "ignore") {
           continue;
         }
-        bar->setWindowHidden(true);
-        fullscreen_hidden_bars_.push_back(bar.get());
+        if (behavior == "hide") {
+          bar->setWindowHidden(true);
+          fullscreen_hidden_bars_.push_back(bar.get());
+        } else {
+          bar->setFullscreenCovered(true);
+          fullscreen_covered_bars_.push_back(bar.get());
+        }
       }
-      spdlog::info("Fullscreen application detected, hiding {} bar(s)",
-                   fullscreen_hidden_bars_.size());
+      spdlog::info("Fullscreen application detected, cover {} bar(s), hide {} bar(s)",
+                   fullscreen_covered_bars_.size(), fullscreen_hidden_bars_.size());
     }
     return;
   }
@@ -583,14 +612,20 @@ void waybar::Client::checkFullscreen() {
     return;
   }
 
+  for (auto* bar : fullscreen_covered_bars_) {
+    if (bar != nullptr) {
+      bar->setFullscreenCovered(false);
+    }
+  }
   for (auto* bar : fullscreen_hidden_bars_) {
     if (bar != nullptr) {
       bar->setWindowHidden(false);
     }
   }
   spdlog::info("Fullscreen application exited, restoring {} bar(s)",
-               fullscreen_hidden_bars_.size());
+               fullscreen_covered_bars_.size() + fullscreen_hidden_bars_.size());
   fullscreen_hidden_bars_.clear();
+  fullscreen_covered_bars_.clear();
   fullscreen_active_ = false;
   fullscreen_window_ = nullptr;
   fullscreen_exit_ticks_ = 0;

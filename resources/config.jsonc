@@ -6,8 +6,8 @@
     "layer": "top",
     "position": "top",
     "height": 32,
-    // 全屏应用时自动收起（默认 true；false 可保持常显）
-    "hide-on-fullscreen": true,
+    // 全屏应用时的行为：cover=保持显示但允许被全屏窗口覆盖（默认），hide=收起，ignore=不处理
+    "fullscreen-behavior": "cover",
     "spacing": 8,
 
     "modules-left": [

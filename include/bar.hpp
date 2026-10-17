@@ -86,6 +86,8 @@ class Bar : public sigc::trackable {
   void setVisible(bool value);
   // 全屏应用时真正隐藏原生窗口（不改变模块更新与手动显示状态）
   void setWindowHidden(bool hidden);
+  // 全屏应用覆盖模式：保持显示但允许被覆盖（压到 z-order 底部）
+  void setFullscreenCovered(bool covered);
   void toggle();
   void show();
   void hide();

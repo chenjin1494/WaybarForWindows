@@ -2,6 +2,7 @@
 
 #include <windows.h>
 
+#include <functional>
 #include <vector>
 
 namespace waybar::win32 {
@@ -15,5 +16,9 @@ bool foreground_is_fullscreen(const std::vector<HWND>& own_windows);
 
 // 判断指定窗口是否处于“全屏”状态（供进入全屏后保持隐藏状态使用）
 bool window_is_fullscreen(HWND window, const std::vector<HWND>& own_windows);
+
+// 前台窗口变化回调（SetWinEventHook，回调在安装线程的消息循环中执行）
+bool install_foreground_hook(std::function<void()> callback);
+void uninstall_foreground_hook();
 
 }  // namespace waybar::win32

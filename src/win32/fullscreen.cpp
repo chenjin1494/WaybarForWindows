@@ -4,6 +4,7 @@
 #include <shellapi.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cwchar>
 
 namespace waybar::win32 {
@@ -49,7 +50,35 @@ bool covers_monitor(HWND window) {
          bounds.bottom >= target.bottom - kTolerance;
 }
 
+std::function<void()> g_foreground_callback;
+HWINEVENTHOOK g_foreground_hook = nullptr;
+
+void CALLBACK foreground_event_proc(HWINEVENTHOOK, DWORD event, HWND, LONG, LONG, DWORD, DWORD) {
+  if (event == EVENT_SYSTEM_FOREGROUND && g_foreground_callback) {
+    g_foreground_callback();
+  }
+}
+
 }  // namespace
+
+bool install_foreground_hook(std::function<void()> callback) {
+  g_foreground_callback = std::move(callback);
+  if (g_foreground_hook != nullptr) {
+    return true;
+  }
+  g_foreground_hook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, nullptr,
+                                      foreground_event_proc, 0, 0,
+                                      WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+  return g_foreground_hook != nullptr;
+}
+
+void uninstall_foreground_hook() {
+  if (g_foreground_hook != nullptr) {
+    UnhookWinEvent(g_foreground_hook);
+    g_foreground_hook = nullptr;
+  }
+  g_foreground_callback = nullptr;
+}
 
 bool window_is_fullscreen(HWND window, const std::vector<HWND>& own_windows) {
   if (window == nullptr || !IsWindow(window) || !IsWindowVisible(window)) {

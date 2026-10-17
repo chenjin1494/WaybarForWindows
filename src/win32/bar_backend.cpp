@@ -230,7 +230,7 @@ void BarBackend::sync_input_window() {
 
   // 必须位于 bar 之上：bar 是分层窗口，透明像素不参与命中测试，
   // 输入层在其上方才能把整条 bar 的点击统一转发给 GTK。
-  SetWindowPos(input_hwnd_, HWND_TOPMOST, current_.x, current_.y, current_.width,
+  SetWindowPos(input_hwnd_, covered_ ? HWND_BOTTOM : HWND_TOPMOST, current_.x, current_.y, current_.width,
                current_.height, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
   ShowWindow(input_hwnd_, SW_SHOWNOACTIVATE);
 }
@@ -261,7 +261,7 @@ void BarBackend::update_size_and_position() {
   current_.width = layout.width;
   current_.height = layout.height;
 
-  HWND insert_after = topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST;
+  HWND insert_after = covered_ ? HWND_BOTTOM : (topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST);
   const UINT flags = SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOCOPYBITS |
                      (styles_applied_ ? 0 : SWP_FRAMECHANGED);
 
@@ -298,6 +298,21 @@ void BarBackend::apply_window_styles() {
   }
 
   styles_applied_ = true;
+}
+
+void BarBackend::set_fullscreen_covered(bool covered) {
+  if (covered_ == covered) return;
+  covered_ = covered;
+  // 收起时允许全屏应用覆盖：把 bar 与输入层压到 z-order 底部；恢复时回到置顶。
+  const HWND insert_after = covered ? HWND_BOTTOM : (topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST);
+  if (hwnd_ != nullptr) {
+    SetWindowPos(hwnd_, insert_after, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+  }
+  if (input_hwnd_ != nullptr) {
+    SetWindowPos(input_hwnd_, insert_after, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+  }
 }
 
 void BarBackend::set_window_hidden(bool hidden) {

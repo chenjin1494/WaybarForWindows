@@ -8,8 +8,50 @@
 // Windows：没有 POSIX 信号，控制命令通过命名管道（waybar --toggle/--reload/...）下发，
 // 具体处理在 Client 内部完成。这里只负责「请求 reload 时重新初始化」的循环。
 
-int main(int argc, char* argv[]) {
+#include <shellapi.h>
+#include <windows.h>
+
+#include <string>
+#include <vector>
+
+#include "win32/common.hpp"
+
+namespace {
+
+// MinGW 的 main(argc, argv) 会把命令行按 ANSI 代码页转换，含中文的路径（如
+// C:\Users\<中文>\...）会损坏。这里改用 CommandLineToArgvW 拿 UTF-16，
+// 再逐项转为 UTF-8，保证 --config/--style 与开机启动命令中的中文路径可用。
+std::vector<std::string> g_args_storage;
+std::vector<char*> g_argv_storage;
+
+void rebuild_args_from_wide() {
+  int argc = 0;
+  LPWSTR* wide = CommandLineToArgvW(GetCommandLineW(), &argc);
+  if (wide == nullptr || argc <= 0) {
+    return;
+  }
+
+  g_args_storage.reserve(static_cast<size_t>(argc));
+  for (int i = 0; i < argc; ++i) {
+    g_args_storage.push_back(waybar::win32::to_utf8(wide[i]));
+  }
+  LocalFree(wide);
+
+  g_argv_storage.reserve(g_args_storage.size() + 1);
+  for (auto& arg : g_args_storage) {
+    g_argv_storage.push_back(arg.data());
+  }
+  g_argv_storage.push_back(nullptr);
+}
+
+}  // namespace
+
+int main(int /*argc*/, char** /*argv*/) {
   try {
+    rebuild_args_from_wide();
+    int argc = static_cast<int>(g_args_storage.size());
+    char** argv = g_argv_storage.empty() ? nullptr : g_argv_storage.data();
+
     auto* client = waybar::Client::inst();
     int ret = 0;
     do {

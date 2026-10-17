@@ -120,3 +120,11 @@
 - `CreateNamedPipeW` 的 `dwOpenMode` **必须**包含 `FILE_FLAG_OVERLAPPED`；否则即使给 `ConnectNamedPipe` 传 `OVERLAPPED`，调用仍会同步阻塞，导致 `stop()` 无法用 `SetEvent` 唤醒监听线程（测试中表现为进程挂起）。
 - 监听循环用独立 `connect_event` + `WaitForMultipleObjects({stop_event, connect_event})`，避免把停止事件复用为 OVERLAPPED 的完成事件（后者会被连接完成误触发）。
 - 客户端 `CreateFileW` 前先 `WaitNamedPipeW(name, timeout)`，避免服务端暂时没有实例时无限等待。
+### 安装版暴露的另一个中文路径问题（已修复）
+
+MinGW 的 `main(int argc, char** argv)` 会按 ANSI 代码页转换命令行，安装到
+`C:\Users\<中文>\AppData\Local\Programs\Waybar` 后，`--config`/`--style` 参数中的中文
+在到达程序时已损坏（表现为 `Can't open config file`）。
+
+修复：Windows 分支改用 `CommandLineToArgvW(GetCommandLineW())` 取 UTF-16 命令行，
+逐项 `to_utf8()` 后再交给 clara/GApplication 解析（`src/main.cpp`），并链接 `shell32`。

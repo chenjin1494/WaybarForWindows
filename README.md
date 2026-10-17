@@ -26,8 +26,27 @@ C++ / GTK3（gtkmm-3.0）代码库，新增 Windows 平台层（窗口、AppBar 
 仍标记 ⏳ 的模块（`temperature`、`backlight`、`power-profiles-daemon`、`pulseaudio/slider`、`cffi/*`、`sway/window` 等）见矩阵，属于后续批次。模块兼容性分级见 [`docs/MODULE-MATRIX.md`](docs/MODULE-MATRIX.md)；Windows 与上游的差异见
 [`docs/WINDOWS-DIFFERENCES.md`](docs/WINDOWS-DIFFERENCES.md)。
 
-## 快速开始
+## 安装（一键安装包）
 
+`scripts\make-installer.ps1` 生成 `dist\waybar-<version>-setup-windows-x64.zip`，解压后双击
+`setup.exe` 即可完成安装：
+
+- 安装到 `%LOCALAPPDATA%\Programs\Waybar`（无需管理员权限）
+- 注册卸载信息（设置 → 应用 中可见）
+- 创建开始菜单快捷方式（Waybar / Uninstall Waybar）
+- **添加开机启动项**（`HKCU\...\CurrentVersion\Run\Waybar`，可在任务管理器→启动 中关闭）
+- 注册 App Paths，命令行可直接运行 `waybar`
+
+```powershell
+setup.exe                                # 图形化安装
+setup.exe /S /no-autostart               # 静默安装且不设开机启动
+setup.exe /S /dir="D:\Apps\Waybar"       # 自定义目录
+setup.exe --uninstall /S                 # 静默卸载
+```
+
+详见 [`docs/INSTALL.md`](docs/INSTALL.md)。
+
+## 快速开始
 前置：Windows 10 1809+ / Windows 11 x64，约 1.5 GB 磁盘空间；**不需要管理员权限**。
 
 ```powershell

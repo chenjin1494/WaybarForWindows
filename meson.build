@@ -134,10 +134,11 @@ if is_windows
         compiler.find_library('propsys'),
         compiler.find_library('bthprops'),
         compiler.find_library('version'),
-    compiler.find_library('ntdll'),
-    compiler.find_library('advapi32'),
-    compiler.find_library('ole32'),
-    compiler.find_library('oleaut32'),
+        compiler.find_library('ntdll'),
+        compiler.find_library('advapi32'),
+        compiler.find_library('shell32'),
+        compiler.find_library('ole32'),
+        compiler.find_library('oleaut32'),
     ]
 else
     wayland_client = dependency('wayland-client')

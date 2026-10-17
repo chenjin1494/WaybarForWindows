@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     在 MSYS2 MINGW64 环境中配置并编译 WaybarForWindows。

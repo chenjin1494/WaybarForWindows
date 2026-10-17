@@ -58,7 +58,7 @@ tooltip label {
 #custom-right_div_5 {
     background: @surface_container_high;
     color: @surface;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -108,7 +108,7 @@ window#waybar.empty #window {
 
 #custom-right_div_6 {
     color: @surface_container_high;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 /* —————————————————————————————————————————————————————————————————————————— */
@@ -123,7 +123,7 @@ window#waybar.empty #window {
     color: @surface_container_high;
     /* 调节这里的padding可以移动中心的模块位置 */
     padding: 0px 0em 0em 0.1em;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 
@@ -171,7 +171,7 @@ window#waybar.empty #window {
     background-color: @surface_container_high;
     color: @tertiary;
     padding: 0px 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 #power-profiles-daemon,
@@ -207,7 +207,7 @@ window#waybar.empty #window {
     color: @surface_container
 }
 #custom-applauncher {
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px 0.39em; /* 7px */
     margin: 0px;
     background-color: @primary;
@@ -223,13 +223,13 @@ window#waybar.empty #window {
 #custom-right_div_1 {
     padding: 0px;
     margin: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 #custom-left_div_11,
 #custom-right_div_11 {
     margin: 0px;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 #custom-right_div_11 {
 
@@ -252,7 +252,7 @@ window#waybar.empty #window {
     background-color: @surface_container_high;
     color: @secondary;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 #custom-cava {
@@ -272,13 +272,13 @@ window#waybar.empty #window {
     color: @surface_container_high;
     /* 调节这里的padding可以移动中心的模块位置 */
     padding: 0px 0em 0px 0px ;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 #custom-right_div_4 {
     /* background-color: @surface_container_high; */
     color: @on_secondary;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 /* —————————————————————————————————————————————————————————————————————————— */
 /* —————————————————————————————————————————————————————————————————————————— */
@@ -292,7 +292,7 @@ window#waybar.empty #window {
 #custom-left_div_7 {
     /* background-color: @surface_container_high; */
     color: @surface_bright;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -308,7 +308,7 @@ window#waybar.empty #window {
     background-color: @surface_bright;
     color: @surface_container_high;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 /* 亮度 */
 #custom-ddcutil-day,
@@ -405,7 +405,7 @@ window#waybar.empty #window {
 #custom-left_div_8 {
     background-color: @surface_container_high;
     color: @surface_container;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
     padding: 0px;
 }
 
@@ -454,13 +454,13 @@ window#waybar.empty #window {
     background-color: @surface_container;
     color: @surface;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 #custom-wlogout {
     background-color: @surface;
     color: @error;
     padding: 0px 0.56em; /* 10px */
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 
@@ -492,7 +492,7 @@ window#waybar.empty #window {
     background-color: @surface;
     color: @surface_container_high;
     padding: 0px;
-    font-size: 1.39em; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
+    font-size: 36px; /* 填充 bar 高度：箭头三角与上下边缘贴合 */
 }
 
 /* ============================================================

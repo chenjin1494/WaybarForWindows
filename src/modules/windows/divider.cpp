@@ -18,8 +18,8 @@ Divider::Divider(const std::string& id, const std::string& widget_name, bool poi
   context->add_class("divider");
   context->add_class(point_left_ ? "left" : "right");
 
-  // 斜率与之前 glyph 版本一致（约 73° 顶角），但高度铺满 bar：宽度 ≈ 0.66h
-  area_.set_size_request(19, -1);
+  // 高度铺满 bar，水平宽度做压缩（按用户要求：压窄宽度、上下尺寸不变）
+  area_.set_size_request(12, -1);
   area_.show();
   event_box_.add(area_);
 
@@ -51,7 +51,7 @@ bool Divider::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   // 底边向上下各延伸 2px，保证抗锯齿后仍从 bar 最上沿铺到最下沿
   constexpr double kOvershoot = 2.0;
   const double base_x = point_left_ ? w : 0.0;
-  const double out_x = point_left_ ? w + 1.0 : -1.0;
+  const double out_x = point_left_ ? w + 2.0 : -2.0;
   cr->move_to(out_x, -kOvershoot);
   cr->line_to(out_x, h + kOvershoot);
   cr->line_to(point_left_ ? 0.0 : w, h / 2.0);

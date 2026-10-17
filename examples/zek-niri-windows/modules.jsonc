@@ -176,5 +176,9 @@
         "start-activated": true,
         "tooltip-format-activated": "自动熄屏已禁止",
         "tooltip-format-deactivated": "自动熄屏已开启"
-    }
+    },
+	/* 居中占位：让中心组徽标左右等长 */
+	"custom/spacer": {
+		"width": 47
+	}
 }

@@ -611,4 +611,5 @@ window#waybar.empty #window {
 #custom-applauncher { background-color: #75AAD7; color: #FFFFFF; }
 #custom-right_div_1 { animation: none; background-color: #2E3942; color: #75AAD7; }
 #custom-right_div_11{ animation: none; background-color: #7B7ECD; color: #2E3942; }
+#custom-right_div_3 { animation: none; }
 window#waybar { background-color: transparent; }
